@@ -26,6 +26,12 @@ main(int argc,
 
    EchoServer server = EchoServer(port);
    server.Init();
-   server.Start();
+   try {
+      server.Start();
+   } catch (const char *error) {
+      perror(error);
+      exit(EXIT_FAILURE);
+   }
+
    return 0;
 }
