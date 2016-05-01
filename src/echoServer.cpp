@@ -17,11 +17,15 @@ EchoServer::EchoServer(int port)
 void
 EchoServer::HandleRequestInt(Request &request)
 {
-   size_t ret;
+   size_t ret = 0;
+   int flag = 0;
 
    request.requestMsg[request.numBytes] = '\0';
+   printf("Received msg: %s\n", request.requestMsg);
+   /* SIGEPIPE should not kill the server. */
+   flag = MSG_NOSIGNAL;
    ret = send(request.clientFd, request.requestMsg, strlen(request.requestMsg),
-              0);
+              flag);
    if (ret < 0 || ret != request.numBytes) {
       throw ("Fail to send data");
    }
