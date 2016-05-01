@@ -1,6 +1,6 @@
 /*
  * @file server.cpp
- * @brief Contains the implementation of the Publish Subscribe Server.
+ * @brief Contains the implementation of the Server base class.
  * @author yihuaf
  */
 
@@ -8,11 +8,20 @@
 #include <cassert>
 #include <cstring>
 
+using namespace std;
+
+Server::Request::Request(int clientFd,
+                         char *requestMsg,
+                         size_t numBytes)
+   : clientFd(clientFd),
+     requestMsg(requestMsg),
+     numBytes(numBytes)
+{}
+
 Server::Server(int port)
 :port(port),
  clientFds()
-{
-}
+{}
 
 Server::~Server() {}
 
@@ -21,9 +30,8 @@ Server::Init()
 {
    struct sockaddr_in address = {0};
 
-   if((this->masterSocket = socket(AF_INET, SOCK_STREAM ,0)) == 0) {
-      perror("Failed to initiate the master socket");
-      exit(EXIT_FAILURE);
+   if ((this->masterSocket = socket(AF_INET, SOCK_STREAM ,0)) == 0) {
+      throw ("Failed to initiate the master socket");
    }
 
    address.sin_family = AF_INET;
@@ -31,14 +39,14 @@ Server::Init()
    address.sin_port = htons(port);
    if (bind(this->masterSocket, (struct sockaddr *)&address,
             sizeof(address)) < 0) {
-      perror("Fail to bind");
-      exit(EXIT_FAILURE);
+      throw ("Fail to bind");
    }
 
    if (listen(this->masterSocket, MAX_NUM_CONNECTION) < 0) {
-      perror("Fail to listen");
-      exit(EXIT_FAILURE);
+      throw ("Fail to listen");
    }
+
+   return;
 }
 
 void
@@ -47,7 +55,7 @@ Server::Start()
    int maxFd;
    int numReady;
 
-   while(true) {
+   for (;;) {
       maxFd = PrepareSelect();
       numReady = select(maxFd + 1 , &this->readfds , &this->writefds, NULL,
                         NULL);
@@ -100,16 +108,18 @@ Server::AcceptConnection()
    struct sockaddr_in address = {0};
    int addrlen = 0;
    int newClientFd = 0;
-   std::pair<std::set<int>::iterator, bool> ret;
+   pair<set<int>::iterator, bool> ret;
 
    if ((newClientFd = accept(this->masterSocket,
                              (struct sockaddr *)&address,
                              (socklen_t*)&addrlen))<0) {
-      perror("Fail to accept");
-      exit(EXIT_FAILURE);
+      throw ("Fail to accept");
    }
 
    ret = this->clientFds.insert(newClientFd);
+   /*
+    * The newly created client fd should be unique.
+    */
    assert(ret.second);
    printf("Accepted new connection %d\n", newClientFd);
    return;
@@ -118,24 +128,18 @@ Server::AcceptConnection()
 void
 Server::HandleRequest(int clientFd)
 {
-   char buffer[MAX_MSG_BUFFER_SIZE];
-   int byte;
+   char *buffer = new char[MAX_MSG_BUFFER_SIZE];
+   size_t bytes;
 
-   if ((byte = read(clientFd, buffer, MAX_MSG_BUFFER_SIZE)) > 0) {
-      int ret;
-
-      // FIXME: change this.
-      buffer[byte] = '\0';
-      ret = send(clientFd, buffer, strlen(buffer), 0);
-      if (ret < 0 || ret != byte) {
-         perror("Fail to send data");
-         exit(EXIT_FAILURE);
-      }
+   if ((bytes = read(clientFd, buffer, MAX_MSG_BUFFER_SIZE)) > 0) {
+      Request request(clientFd, buffer, bytes);
+      HandleRequestInt(request);
    } else {
       close(clientFd);
       this->clientFds.erase(clientFd);
    }
 
+   delete buffer;
    return;
 }
 
