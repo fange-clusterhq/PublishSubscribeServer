@@ -1,6 +1,6 @@
 #pragma once
 
-#include <set>
+#include <map>
 #include <stdio.h>
 #include <stdlib.h>
 #include <errno.h>
@@ -18,14 +18,16 @@ static const int MAX_MSG_BUFFER_SIZE = 4096;
 
 class Server {
    public:
-      typedef struct Request {
-         Request(int clientFd,
-                 char *requestMsg,
-                 size_t numBytes);
-         int clientFd;
-         char *requestMsg;
-         size_t numBytes;
-      } Request;
+      class Request {
+         public:
+            int clientFd;
+            char recvBuffer[MAX_MSG_BUFFER_SIZE];
+            int numBytes;
+
+            Request();
+            inline char *GetBufferForRecv();
+            inline size_t GetSizeForRecv();
+      };
 
       Server(int port);
       ~Server();
@@ -37,10 +39,10 @@ class Server {
       fd_set readfds;
       fd_set writefds;
       int masterSocket;
-      set<int> clientFds;
+      map<int, Request *> clientContext;
 
       void AcceptConnection();
       void HandleRequest(int clientFd);
       int PrepareSelect();
-      virtual void HandleRequestInt(Request &request) = 0;
+      virtual bool HandleRequestInt(Request *request) = 0;
 };

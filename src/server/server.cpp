@@ -10,17 +10,25 @@
 
 using namespace std;
 
-Server::Request::Request(int clientFd,
-                         char *requestMsg,
-                         size_t numBytes)
-   : clientFd(clientFd),
-     requestMsg(requestMsg),
-     numBytes(numBytes)
+Server::Request::Request()
+   :clientFd(0),
+    numBytes(0)
 {}
 
+inline char *
+Server::Request::GetBufferForRecv()
+{
+   return this->recvBuffer + this->numBytes;
+}
+
+inline size_t
+Server::Request::GetSizeForRecv()
+{
+   return MAX_MSG_BUFFER_SIZE - this->numBytes;
+}
+
 Server::Server(int port)
-:port(port),
- clientFds()
+:port(port)
 {}
 
 Server::~Server() {}
@@ -52,13 +60,10 @@ Server::Init()
 void
 Server::Start()
 {
-   int maxFd;
-   int numReady;
-
    for (;;) {
-      maxFd = PrepareSelect();
-      numReady = select(maxFd + 1 , &this->readfds , &this->writefds, NULL,
-                        NULL);
+      int maxFd = PrepareSelect();
+      int numReady = select(maxFd + 1 , &this->readfds , &this->writefds, NULL,
+                            NULL);
       if (numReady < 0 && errno != EINTR) {
          perror("Select error");
          continue;
@@ -68,9 +73,8 @@ Server::Start()
          AcceptConnection();
       }
 
-      for (auto it = this->clientFds.begin(); it != this->clientFds.end();
-           it++) {
-         int clientFd = *it;
+      for(const auto &context : this->clientContext) {
+         int clientFd = context.first;
 
          if (FD_ISSET(clientFd, &this->readfds)) {
             HandleRequest(clientFd);
@@ -86,13 +90,11 @@ int
 Server::PrepareSelect()
 {
    int maxFd = this->masterSocket;
-
    FD_ZERO(&this->readfds);
    FD_ZERO(&this->writefds);
    FD_SET(this->masterSocket, &this->readfds);
-   for(auto it = this->clientFds.begin(); it != this->clientFds.end(); it++) {
-      int clientFd = *it;
-
+   for(const auto &context : this->clientContext) {
+      int clientFd = context.first;
       FD_SET(clientFd, &this->readfds);
       if (clientFd > maxFd) {
          maxFd = clientFd;
@@ -108,7 +110,6 @@ Server::AcceptConnection()
    struct sockaddr_in address = {0};
    int addrlen = 0;
    int newClientFd = 0;
-   pair<set<int>::iterator, bool> ret;
 
    if ((newClientFd = accept(this->masterSocket,
                              (struct sockaddr *)&address,
@@ -116,11 +117,11 @@ Server::AcceptConnection()
       throw ("Fail to accept");
    }
 
-   ret = this->clientFds.insert(newClientFd);
    /*
     * The newly created client fd should be unique.
     */
-   assert(ret.second);
+   assert(this->clientContext.find(newClientFd) == this->clientContext.end());
+   this->clientContext.insert(pair<int, Request *>(newClientFd, NULL));
    printf("Accepted new connection %d\n", newClientFd);
    return;
 }
@@ -128,18 +129,29 @@ Server::AcceptConnection()
 void
 Server::HandleRequest(int clientFd)
 {
-   char *buffer = new char[MAX_MSG_BUFFER_SIZE];
-   size_t bytes;
-
-   if ((bytes = read(clientFd, buffer, MAX_MSG_BUFFER_SIZE)) > 0) {
-      Request request(clientFd, buffer, bytes);
-      HandleRequestInt(request);
-   } else {
-      close(clientFd);
-      this->clientFds.erase(clientFd);
+   map<int, Request *>::iterator it = this->clientContext.find(clientFd);
+   assert(it != this->clientContext.end());
+   if (it->second == NULL) {
+      it->second = new Request();
    }
 
-   delete buffer;
+   Request *request = it->second;
+   size_t bytes = read(clientFd, request->GetBufferForRecv(),
+                       request->GetSizeForRecv());
+   if (bytes > 0) {
+      if (HandleRequestInt(request)) {
+         delete request;
+         it->second = NULL;
+      }
+   } else {
+      close(clientFd);
+      delete request;
+      this->clientContext.erase(it);
+      if (bytes < 0) {
+         throw ("Failed to receive");
+      }
+   }
+
    return;
 }
 

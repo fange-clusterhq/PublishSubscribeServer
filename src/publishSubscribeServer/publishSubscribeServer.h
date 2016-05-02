@@ -7,7 +7,7 @@ class PublishSubscribeServer : public Server {
       explicit PublishSubscribeServer(int port);
       ~PublishSubscribeServer();
    private:
-      void HandleRequestInt(Request &request);
+      bool HandleRequestInt(Request *request);
       /*
       void Subscribe();
       void Unsubscribe();

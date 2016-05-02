@@ -14,9 +14,9 @@ PublishSubscribeServer::~PublishSubscribeServer()
 {
 }
 
-void
-PublishSubscribeServer::HandleRequestInt(Request &request)
+bool
+PublishSubscribeServer::HandleRequestInt(Request *request)
 {
-   return;
+   return true;
 }
 
