@@ -41,6 +41,8 @@ $(EXTERNAL_OBJS): %.o: %.cpp $(EXTERNAL_HEADER)
 	$(CC) $(CPPFLAGS) $(INCFLAG) -c $<  -o $@
 clean:
 	rm -rf $(BIN)
+	rm -rf $(SERVER_OBJS)
+	rm -rf $(EXTERNAL_OBJS)
 	rm -rf $(PUBLISH_SUBSCRIBE_SERVER_OBJS)
 
 .PHONY: all clean
