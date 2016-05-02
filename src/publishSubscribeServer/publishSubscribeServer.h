@@ -8,8 +8,10 @@ class PublishSubscribeServer : public Server {
       ~PublishSubscribeServer();
    private:
       void HandleRequestInt(Request &request);
+      /*
       void Subscribe();
       void Unsubscribe();
       void Publish();
       void GetNextMessage();
+      */
 };
