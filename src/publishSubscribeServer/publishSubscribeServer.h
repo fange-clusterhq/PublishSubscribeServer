@@ -1,6 +1,6 @@
 #pragma once
 
-#include "server.h"
+#include <server/server.h>
 
 class PublishSubscribeServer : public Server {
    public:
@@ -8,4 +8,8 @@ class PublishSubscribeServer : public Server {
       ~PublishSubscribeServer();
    private:
       void HandleRequestInt(Request &request);
+      void Subscribe();
+      void Unsubscribe();
+      void Publish();
+      void GetNextMessage();
 };
