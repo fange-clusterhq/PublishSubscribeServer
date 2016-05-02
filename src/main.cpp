@@ -3,7 +3,7 @@
  * @brief The main function for the Publish Subscribe Server
  */
 
-#include "echoServer.h"
+#include "publishSubscribeServer.h"
 #include <iostream>
 
 int
@@ -24,7 +24,7 @@ main(int argc,
       }
    }
 
-   EchoServer server = EchoServer(port);
+   PublishSubscribeServer server = PublishSubscribeServer(port);
    server.Init();
    try {
       server.Start();
