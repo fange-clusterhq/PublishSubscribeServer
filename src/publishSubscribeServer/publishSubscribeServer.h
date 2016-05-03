@@ -4,7 +4,7 @@
 #include <string>
 #include <map>
 #include <queue>
-#include "publishSubscribeRequest.h"
+//#include "publishSubscribeRequest.h"
 
 using namespace std;
 
@@ -23,6 +23,7 @@ bool FreePublishMsg(PublishMsg *msg) {
 }
 */
 
+/*
 class PublishSubscribeSystem {
    public:
       void Subscribe(string &username, string &topic);
@@ -33,6 +34,7 @@ class PublishSubscribeSystem {
       map<string, string> topicSubscription;
       map<string, queue<PublishedMsg *>> msgQueue;
 };
+*/
 
 class PublishSubscribeServer : public Server {
    public:

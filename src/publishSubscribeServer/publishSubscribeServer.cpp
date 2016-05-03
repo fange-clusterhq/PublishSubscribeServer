@@ -22,6 +22,7 @@ PublishSubscribeServer::HandleRequestInt(Request *request)
    return true;
 }
 
+/*
 void
 PublishSubscribeServer::Subscribe(string username,
                                   string topic)
@@ -45,4 +46,4 @@ PublishSubscribeServer::GetNextMessage(string username,
                                        string topic)
 {
 }
-
+*/

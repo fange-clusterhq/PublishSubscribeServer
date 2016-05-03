@@ -1,7 +1,7 @@
 # The make file should sit in the root directory of the projecy.
 CC = g++
 CPPFLAGS = -Wall -Werror -g -std=c++11 -pedantic
-PROJECT_ROOT := $(shell readlink $(dir $(lastword $(MAKEFILE_LIST))) -f)
+PROJECT_ROOT := $(shell dirname $(realpath $(lastword $(MAKEFILE_LIST))))
 BIN = $(PROJECT_ROOT)/bin
 SRC = $(PROJECT_ROOT)/src
 INCFLAG = -I$(SRC)
@@ -21,7 +21,7 @@ PUBLISH_SUBSCRIBE_SERVER_SRC = $(shell find $(PUBLISH_SUBSCRIBE_SERVER_DIR) -typ
 PUBLISH_SUBSCRIBE_SERVER_HEADER = $(shell find $(PUBLISH_SUBSCRIBE_SERVER_DIR) -type f -name "*.h")
 PUBLISH_SUBSCRIBE_SERVER_OBJS = $(PUBLISH_SUBSCRIBE_SERVER_SRC:.cpp=.o)
 
-all: $(BIN) $(ECHO_SERVER) $(PUBLISH_SUBSCRIBE_SERVER)
+all: $(BIN) $(PUBLISH_SUBSCRIBE_SERVER)
 
 $(BIN):
 	mkdir -p $(BIN)
@@ -29,10 +29,8 @@ $(BIN):
 $(PUBLISH_SUBSCRIBE_SERVER): $(SERVER_OBJS) $(EXTERNAL_OBJS) $(PUBLISH_SUBSCRIBE_SERVER_OBJS)
 	$(CC) $(CPPFLAGS) $(INCFLAG) $(PUBLISH_SUBSCRIBE_SERVER_OBJS) $(SERVER_OBJS) -o $@
 
-
 $(PUBLISH_SUBSCRIBE_SERVER_OBJS): %.o: %.cpp $(PUBLISH_SUBSCRIBE_SERVER_HEADER)
 	$(CC) $(CPPFLAGS) $(INCFLAG) -c $<  -o $@
-
 
 $(SERVER_OBJS): %.o: %.cpp $(SERVER_HEADER)
 	$(CC) $(CPPFLAGS) $(INCFLAG) -c $<  -o $@

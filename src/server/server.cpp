@@ -45,8 +45,8 @@ Server::Init()
    address.sin_family = AF_INET;
    address.sin_addr.s_addr = INADDR_ANY;
    address.sin_port = htons(port);
-   if (bind(this->masterSocket, (struct sockaddr *)&address,
-            sizeof(address)) < 0) {
+   if(::bind(this->masterSocket, (struct sockaddr *)&address,
+             sizeof(address))) {
       throw ("Fail to bind");
    }
 
@@ -136,8 +136,8 @@ Server::HandleRequest(int clientFd)
    }
 
    Request *request = it->second;
-   size_t bytes = read(clientFd, request->GetBufferForRecv(),
-                       request->GetSizeForRecv());
+   int bytes = read(clientFd, request->GetBufferForRecv(),
+                    request->GetSizeForRecv());
    if (bytes > 0) {
       if (HandleRequestInt(request)) {
          delete request;
