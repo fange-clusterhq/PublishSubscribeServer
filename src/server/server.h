@@ -7,6 +7,7 @@
  *
  * @author Yihua Eric Fang (yihuaf)
  */
+
 #pragma once
 
 #include <map>
@@ -19,6 +20,7 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <sys/time.h>
+#include <queue>
 
 using namespace std;
 
@@ -60,7 +62,7 @@ class Server {
             /* This request is received from thsi client. */
             int clientFd;
             char recvBuffer[MAX_MSG_BUFFER_SIZE];
-            int numBytes;
+            size_t numBytes;
 
             Request();
             /* @brief Return a pointer to the buffer for receiving new data.
@@ -97,6 +99,10 @@ class Server {
        * request.
        */
       map<int, Request *> clientContext;
+      /*
+       * Store all the pending out going messages.
+       */
+      map<int, queue<Request *>> msgOutgoingQueue;
 
       /* @brief Accept a new connection.
        *
@@ -128,13 +134,28 @@ class Server {
 
       /* @brief Handle the request after the data is received.
        *
-       * This function is a pure abstract function which the derived class
-       * of this class should implement. The function should do the heavy
-       * lifting to process the data received and determine if the current
-       * request is full or partial.
+       * The function should do the heavy lifting to process the data received
+       * and determine if the current request is full or partial.  The derived
+       * class of this class should override this method.  For this class, this
+       * method will echo the received back to sender.
        *
        * @params request The request containing the data received.
        * @return Is this request done or only a partial.
        */
-      virtual bool HandleRequestInt(Request *request) = 0;
+      bool HandleRequestInt(Request *request);
+
+      /* @brief Queue the msg to the queue.
+       *
+       * We first queue the messages to the queue. Then, the destnation fd will
+       * be set for the select(). When the dest fd becomes available to write
+       * the server will sent them out.
+       *
+       * @params clientFd The dest client fd.
+       * @params request Contains msg to be sent out.
+       * @return None.
+       */
+      void queueMsg(int clientFd, Request *request);
+
+      Request *dequeueMsg(int clientFd);
+      void HandleOutgoingMsg(int clientFd);
 };

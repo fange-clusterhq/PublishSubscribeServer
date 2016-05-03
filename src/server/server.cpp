@@ -75,9 +75,15 @@ Server::Start()
 
       for(const auto &context : this->clientContext) {
          int clientFd = context.first;
-
          if (FD_ISSET(clientFd, &this->readfds)) {
             HandleRequest(clientFd);
+         }
+      }
+
+      for(const auto &outgoingQueue : this->msgOutgoingQueue) {
+         int clientFd = outgoingQueue.first;
+         if (FD_ISSET(clientFd, &this->writefds)) {
+            HandleOutgoingMsg(clientFd);
          }
       }
    }
@@ -96,6 +102,14 @@ Server::PrepareSelect()
    for(const auto &context : this->clientContext) {
       int clientFd = context.first;
       FD_SET(clientFd, &this->readfds);
+      if (clientFd > maxFd) {
+         maxFd = clientFd;
+      }
+   }
+
+   for(const auto &outgoingQueue : this->msgOutgoingQueue) {
+      int clientFd = outgoingQueue.first;
+      FD_SET(clientFd, &writefds);
       if (clientFd > maxFd) {
          maxFd = clientFd;
       }
@@ -155,3 +169,58 @@ Server::HandleRequest(int clientFd)
    return;
 }
 
+
+bool
+Server::HandleRequestInt(Request *request)
+{
+   this->queueMsg(request->clientFd, request);
+   /* Echos back, so it will never be partial. */
+   return true;
+}
+
+
+void
+Server::queueMsg(int clientFd, Request *request)
+{
+   msgOutgoingQueue[clientFd].push(request);
+   return;
+}
+
+
+Server::Request *
+Server::dequeueMsg(int clientFd)
+{
+   map<int, queue<Request *>>::iterator it = this->msgOutgoingQueue.find(clientFd);
+   assert(it != this->msgOutgoingQueue.end());
+   queue<Request *> &msgQueue = it->second;
+   assert(!msgQueue.empty());
+   Request *request = msgQueue.front();
+   msgQueue.pop();
+   if (msgQueue.empty()) {
+      msgOutgoingQueue.erase(clientFd);
+   }
+
+   return request;
+}
+
+
+void
+Server::HandleOutgoingMsg(int clientFd)
+{
+   Request *request = dequeueMsg(clientFd);
+   assert(request != NULL);
+   int numBytesExpectedSend = request->numBytes;
+   int numBytesActualSend = 0;
+   ssize_t ret;
+   while(numBytesActualSend < numBytesExpectedSend) {
+      ret = send(clientFd, request->recvBuffer,
+                 request->numBytes - numBytesActualSend, 0);
+      if (ret < 0) {
+         perror("Failed to send");
+      }
+
+      numBytesActualSend += ret;
+   }
+
+   return;
+}
