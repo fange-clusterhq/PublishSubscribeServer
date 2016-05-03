@@ -4,42 +4,35 @@
 #include <string>
 #include <map>
 #include <queue>
-//#include "publishSubscribeRequest.h"
+#include "publishSubscribeRequest.h"
 
 using namespace std;
 
-/*
-typedef struct PublishMsg {
-   char *msg;
-   int numBytes;
-   int refCount;
-} PublishMsg;
-
-bool FreePublishMsg(PublishMsg *msg) {
-   msg->refCount--;
-   if (msg->refCount == 0) {
-      delete msg->msg;
-   }
-}
-*/
-
-/*
-class PublishSubscribeSystem {
+class PublishedMsg {
    public:
-      void Subscribe(string &username, string &topic);
-      void Unsubscribe(string &username, string &topic);
-      void Publish(string &topic, char *msg);
-      void GetNextMessage(string &username, string &topic);
-   private:
-      map<string, string> topicSubscription;
-      map<string, queue<PublishedMsg *>> msgQueue;
+      PublishedMsg();
+      PublishedMsg(char *msg, int numBytes, int refCount);
+      PublishedMsg(PublishedMsg &msg);
+      ~PublishedMsg();
+
+      bool Dereference();
+
+      char *msg;
+      int numBytes;
+      int refCount;
 };
-*/
 
 class PublishSubscribeServer : public Server {
    public:
       explicit PublishSubscribeServer(int port);
       ~PublishSubscribeServer();
    private:
-      bool HandleRequestInt(Request *request);
+      map<string, string> topicSubscription;
+      map<string, queue<PublishedMsg *>> msgQueue;
+
+      bool HandleRequestInt(ReadRequest *request);
+      void Subscribe(string &username, string &topic);
+      void Unsubscribe(string &username, string &topic);
+      void Publish(string &topic, char *msg);
+      void GetNextMessage(string &username, string &topic);
 };

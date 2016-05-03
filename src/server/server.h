@@ -28,6 +28,44 @@ static const int MAX_NUM_CONNECTION = 64;
 /* Ideally, a HTTP header should not exceeds this length. */
 static const int MAX_MSG_BUFFER_SIZE = 4096;
 
+class Request {
+   public:
+      /* This request is received from thsi client. */
+      int clientFd;
+      char buffer[MAX_MSG_BUFFER_SIZE];
+      size_t numBytes;
+
+      /* @brief Constructor */
+      Request();
+};
+
+class ReadRequest : public Request {
+   public:
+      ReadRequest();
+      /* @brief Return a pointer to the buffer for receiving new data.
+       *
+       * The pointer returned is the position of where the current buffer
+       * is. There might be data stored from the last receive and is only
+       * a particial valid request.
+       *
+       * @return None.
+       */
+      inline char *GetBufferForRecv();
+      /* @brief Return the size available in the buffer.
+       *
+       * As mentioned before, the buffer may have stored some data
+       * already, so we return the size currently available.
+       *
+       * @return None.
+       */
+      inline size_t GetSizeForRecv();
+};
+
+class WriteRequest : public Request {
+   public:
+      WriteRequest();
+};
+
 class Server {
    public:
       /* @brief Constructor.
@@ -56,34 +94,6 @@ class Server {
        * @return None.
        */
       void Start();
-   protected:
-      class Request {
-         public:
-            /* This request is received from thsi client. */
-            int clientFd;
-            char recvBuffer[MAX_MSG_BUFFER_SIZE];
-            size_t numBytes;
-
-            Request();
-            /* @brief Return a pointer to the buffer for receiving new data.
-             *
-             * The pointer returned is the position of where the current buffer
-             * is. There might be data stored from the last receive and is only
-             * a particial valid request.
-             *
-             * @return None.
-             */
-            inline char *GetBufferForRecv();
-            /* @brief Return the size available in the buffer.
-             *
-             * As mentioned before, the buffer may have stored some data
-             * already, so we return the size currently available.
-             *
-             * @return None.
-             */
-            inline size_t GetSizeForRecv();
-      };
-
    private:
       /* Listening to this port. */
       int port;
@@ -98,11 +108,11 @@ class Server {
        * request should not be NULL us previously this client sent a partial
        * request.
        */
-      map<int, Request *> clientContext;
+      map<int, ReadRequest *> clientContext;
       /*
        * Store all the pending out going messages.
        */
-      map<int, queue<Request *>> msgOutgoingQueue;
+      map<int, queue<WriteRequest *>> msgOutgoingQueue;
 
       /* @brief Accept a new connection.
        *
@@ -142,7 +152,7 @@ class Server {
        * @params request The request containing the data received.
        * @return Is this request done or only a partial.
        */
-      bool HandleRequestInt(Request *request);
+      bool HandleRequestInt(ReadRequest *request);
 
       /* @brief Queue the msg to the queue.
        *
@@ -154,8 +164,8 @@ class Server {
        * @params request Contains msg to be sent out.
        * @return None.
        */
-      void queueMsg(int clientFd, Request *request);
+      void queueMsg(int clientFd, WriteRequest *request);
 
-      Request *dequeueMsg(int clientFd);
+      WriteRequest *dequeueMsg(int clientFd);
       void HandleOutgoingMsg(int clientFd);
 };

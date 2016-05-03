@@ -1,6 +1,6 @@
 # The make file should sit in the root directory of the projecy.
 CC = g++
-CPPFLAGS = -Wall -Werror -g -std=c++11 -pedantic
+CPPFLAGS = -Wall -Wextra -Werror -g -std=c++11 -pedantic
 PROJECT_ROOT := $(shell dirname $(realpath $(lastword $(MAKEFILE_LIST))))
 BIN = $(PROJECT_ROOT)/bin
 SRC = $(PROJECT_ROOT)/src
@@ -27,7 +27,7 @@ $(BIN):
 	mkdir -p $(BIN)
 
 $(PUBLISH_SUBSCRIBE_SERVER): $(SERVER_OBJS) $(EXTERNAL_OBJS) $(PUBLISH_SUBSCRIBE_SERVER_OBJS)
-	$(CC) $(CPPFLAGS) $(INCFLAG) $(PUBLISH_SUBSCRIBE_SERVER_OBJS) $(SERVER_OBJS) -o $@
+	$(CC) $(CPPFLAGS) $(INCFLAG) $(PUBLISH_SUBSCRIBE_SERVER_OBJS) $(EXTERNAL_OBJS) $(SERVER_OBJS) -o $@
 
 $(PUBLISH_SUBSCRIBE_SERVER_OBJS): %.o: %.cpp $(PUBLISH_SUBSCRIBE_SERVER_HEADER)
 	$(CC) $(CPPFLAGS) $(INCFLAG) -c $<  -o $@
@@ -37,6 +37,7 @@ $(SERVER_OBJS): %.o: %.cpp $(SERVER_HEADER)
 
 $(EXTERNAL_OBJS): %.o: %.cpp $(EXTERNAL_HEADER)
 	$(CC) $(CPPFLAGS) $(INCFLAG) -c $<  -o $@
+
 clean:
 	rm -rf $(BIN)
 	rm -rf $(SERVER_OBJS)

@@ -10,22 +10,30 @@
 
 using namespace std;
 
-Server::Request::Request()
+Request::Request()
    :clientFd(0),
     numBytes(0)
 {}
 
+ReadRequest::ReadRequest()
+   :Request()
+{}
+
 inline char *
-Server::Request::GetBufferForRecv()
+ReadRequest::GetBufferForRecv()
 {
-   return this->recvBuffer + this->numBytes;
+   return this->buffer + this->numBytes;
 }
 
 inline size_t
-Server::Request::GetSizeForRecv()
+ReadRequest::GetSizeForRecv()
 {
    return MAX_MSG_BUFFER_SIZE - this->numBytes;
 }
+
+WriteRequest::WriteRequest()
+   :Request()
+{}
 
 Server::Server(int port)
 :port(port)
@@ -36,7 +44,7 @@ Server::~Server() {}
 void
 Server::Init()
 {
-   struct sockaddr_in address = {0};
+   struct sockaddr_in address;
 
    if ((this->masterSocket = socket(AF_INET, SOCK_STREAM ,0)) == 0) {
       throw ("Failed to initiate the master socket");
@@ -73,15 +81,19 @@ Server::Start()
          AcceptConnection();
       }
 
-      for(const auto &context : this->clientContext) {
-         int clientFd = context.first;
+      for(auto it = this->clientContext.begin();
+          it != this->clientContext.end();) {
+         int clientFd = it->first;
+         it++;
          if (FD_ISSET(clientFd, &this->readfds)) {
             HandleRequest(clientFd);
          }
       }
 
-      for(const auto &outgoingQueue : this->msgOutgoingQueue) {
-         int clientFd = outgoingQueue.first;
+      for(auto it = this->msgOutgoingQueue.begin();
+          it != this->msgOutgoingQueue.end();) {
+         int clientFd = it->first;
+         it++;
          if (FD_ISSET(clientFd, &this->writefds)) {
             HandleOutgoingMsg(clientFd);
          }
@@ -121,7 +133,7 @@ Server::PrepareSelect()
 void
 Server::AcceptConnection()
 {
-   struct sockaddr_in address = {0};
+   struct sockaddr_in address;
    int addrlen = 0;
    int newClientFd = 0;
 
@@ -135,7 +147,7 @@ Server::AcceptConnection()
     * The newly created client fd should be unique.
     */
    assert(this->clientContext.find(newClientFd) == this->clientContext.end());
-   this->clientContext.insert(pair<int, Request *>(newClientFd, NULL));
+   this->clientContext[newClientFd] =  NULL;
    printf("Accepted new connection %d\n", newClientFd);
    return;
 }
@@ -143,16 +155,18 @@ Server::AcceptConnection()
 void
 Server::HandleRequest(int clientFd)
 {
-   map<int, Request *>::iterator it = this->clientContext.find(clientFd);
+   map<int, ReadRequest *>::iterator it = this->clientContext.find(clientFd);
    assert(it != this->clientContext.end());
    if (it->second == NULL) {
-      it->second = new Request();
+      it->second = new ReadRequest();
    }
 
-   Request *request = it->second;
+   ReadRequest *request = it->second;
    int bytes = read(clientFd, request->GetBufferForRecv(),
                     request->GetSizeForRecv());
    if (bytes > 0) {
+      request->clientFd = clientFd;
+      request->numBytes += bytes;
       if (HandleRequestInt(request)) {
          delete request;
          it->second = NULL;
@@ -171,30 +185,35 @@ Server::HandleRequest(int clientFd)
 
 
 bool
-Server::HandleRequestInt(Request *request)
+Server::HandleRequestInt(ReadRequest *request)
 {
-   this->queueMsg(request->clientFd, request);
+   WriteRequest *newRequest = new WriteRequest();
+   newRequest->clientFd = request->clientFd;
+   memcpy(newRequest->buffer, request->buffer, request->numBytes);
+   newRequest->numBytes = request->numBytes;
+   this->queueMsg(request->clientFd, newRequest);
    /* Echos back, so it will never be partial. */
    return true;
 }
 
 
 void
-Server::queueMsg(int clientFd, Request *request)
+Server::queueMsg(int clientFd, WriteRequest *request)
 {
    msgOutgoingQueue[clientFd].push(request);
    return;
 }
 
 
-Server::Request *
+WriteRequest *
 Server::dequeueMsg(int clientFd)
 {
-   map<int, queue<Request *>>::iterator it = this->msgOutgoingQueue.find(clientFd);
+   map<int, queue<WriteRequest *>>::iterator it =
+      this->msgOutgoingQueue.find(clientFd);
    assert(it != this->msgOutgoingQueue.end());
-   queue<Request *> &msgQueue = it->second;
+   queue<WriteRequest *> &msgQueue = it->second;
    assert(!msgQueue.empty());
-   Request *request = msgQueue.front();
+   WriteRequest *request = msgQueue.front();
    msgQueue.pop();
    if (msgQueue.empty()) {
       msgOutgoingQueue.erase(clientFd);
@@ -207,13 +226,13 @@ Server::dequeueMsg(int clientFd)
 void
 Server::HandleOutgoingMsg(int clientFd)
 {
-   Request *request = dequeueMsg(clientFd);
+   WriteRequest *request = dequeueMsg(clientFd);
    assert(request != NULL);
    int numBytesExpectedSend = request->numBytes;
    int numBytesActualSend = 0;
    ssize_t ret;
    while(numBytesActualSend < numBytesExpectedSend) {
-      ret = send(clientFd, request->recvBuffer,
+      ret = send(clientFd, request->buffer,
                  request->numBytes - numBytesActualSend, 0);
       if (ret < 0) {
          perror("Failed to send");
@@ -222,5 +241,6 @@ Server::HandleOutgoingMsg(int clientFd)
       numBytesActualSend += ret;
    }
 
+   delete request;
    return;
 }
