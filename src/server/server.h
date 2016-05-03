@@ -54,7 +54,7 @@ class Server {
        * @return None.
        */
       void Start();
-   private:
+   protected:
       class Request {
          public:
             /* This request is received from thsi client. */
@@ -82,6 +82,7 @@ class Server {
             inline size_t GetSizeForRecv();
       };
 
+   private:
       /* Listening to this port. */
       int port;
       /* Fd sets for the select(). */
