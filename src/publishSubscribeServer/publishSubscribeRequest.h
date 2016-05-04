@@ -20,11 +20,17 @@ enum class PublishSubscribeServerOp {
 };
 
 class PublishSubscribeRequest {
-  public:
-    void Translate(string &httpRequest);
+   public:
+      /*
+       * @brief Translate from a httpRequest to a publish subscibe request.
+       *
+       * @params httpRequest The HTTP request to be parsed and translated.
+       * @return None.
+       */
+      void Translate(string &httpRequest);
 
-    PublishSubscribeServerOp opCode;
-    string username;
-    string topic;
-    string msg;
+      PublishSubscribeServerOp opCode;
+      string username;
+      string topic;
+      string msg;
 };
