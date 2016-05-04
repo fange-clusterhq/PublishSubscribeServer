@@ -12,8 +12,9 @@
 #define HTTP_REQUEST_PARSER_HPP
 
 #include <tuple>
+#include "request.hpp"
 
-struct request;
+//struct request;
 
 /// Parser for incoming requests.
 class request_parser
