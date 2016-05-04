@@ -14,8 +14,6 @@
 #include <tuple>
 #include "request.hpp"
 
-//struct request;
-
 /// Parser for incoming requests.
 class request_parser
 {

@@ -1,6 +1,7 @@
 #pragma once
 
 #include <string>
+#include <vector>
 
 using namespace std;
 
@@ -11,16 +12,19 @@ static const string DELETE = "DELETE";
 static const string CONTENT_LENGTH = "Content-Length";
 
 enum class PublishSubscribeServerOp {
+   FIRST,
    SUBSCRIBE,
    UNSUBSCRIBE,
    PUBLISH,
    GET_NEXT_MSG,
    ERROR,
-   CONTINUE
+   CONTINUE,
+   SENTINEL
 };
 
 class PublishSubscribeRequest {
    public:
+      PublishSubscribeRequest();
       /*
        * @brief Translate from a httpRequest to a publish subscibe request.
        *
@@ -33,4 +37,13 @@ class PublishSubscribeRequest {
       string username;
       string topic;
       string msg;
+   private:
+      bool CheckAndParseSubscribe(string &uri);
+      bool CheckAndParseUnsubscribe(string &uri);
+      bool CheckAndParsePublish(struct request &parsedRequest,
+                                string &httpRequest,
+                                string::iterator &headerEnd);
+      bool CheckAndParseGetNext(string &uri);
+      bool ParseMsg();
+      vector<string> ParseUriTokenize(string &uri);
 };
