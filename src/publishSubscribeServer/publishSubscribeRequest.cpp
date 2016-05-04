@@ -18,6 +18,7 @@ PublishSubscribeRequest::Translate(string &httpRequest)
     return;
   }
 
+  HTTPRequestToString(parsedRequest);
   //auto headerEndIter = get<1>(ret);
   if (parsedRequest.method.compare(GET) == 0) {
     return;
@@ -30,7 +31,4 @@ PublishSubscribeRequest::Translate(string &httpRequest)
   }
 
   return;
-
-  // good so continue to parse.
-
 }

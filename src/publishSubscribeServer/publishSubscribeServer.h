@@ -11,14 +11,12 @@ using namespace std;
 class PublishedMsg {
    public:
       PublishedMsg();
-      PublishedMsg(char *msg, int numBytes, int refCount);
+      PublishedMsg(string &msg, int refCount);
       PublishedMsg(PublishedMsg &msg);
-      ~PublishedMsg();
 
       bool Dereference();
 
-      char *msg;
-      int numBytes;
+      string msg;
       int refCount;
 };
 
@@ -31,8 +29,8 @@ class PublishSubscribeServer : public Server {
       map<string, queue<PublishedMsg *>> msgQueue;
 
       bool HandleRequestInt(ReadRequest *request);
-      void Subscribe(string &username, string &topic);
-      void Unsubscribe(string &username, string &topic);
-      void Publish(string &topic, char *msg);
-      void GetNextMessage(string &username, string &topic);
+      void Subscribe(const string &username, const string &topic);
+      void Unsubscribe(const string &username, const string &topic);
+      void Publish(const string &topic, string &msg);
+      void GetNextMessage(const string &username, const string &topic);
 };

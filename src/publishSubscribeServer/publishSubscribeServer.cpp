@@ -5,47 +5,32 @@
  */
 
 #include "publishSubscribeServer.h"
+#include "publishSubscribeRequest.h"
 #include <cassert>
 
 using namespace std;
 
 PublishedMsg::PublishedMsg()
-   :msg(NULL),
-    numBytes(0),
+   :msg(),
     refCount(0)
 {}
 
-PublishedMsg::PublishedMsg(char *msg,
-                           int numBytes,
+PublishedMsg::PublishedMsg(string &msg,
                            int refCount)
-   :msg(new char[numBytes]),
-    numBytes(numBytes),
+   :msg(msg),
     refCount(refCount)
-{
-   memcpy(this->msg, msg, numBytes);
-}
+{}
 
 PublishedMsg::PublishedMsg(PublishedMsg &msg)
 {
-   PublishedMsg(msg.msg, msg.numBytes, msg.refCount);
-}
-
-PublishedMsg::~PublishedMsg()
-{
-   delete msg;
+   PublishedMsg(msg.msg, msg.refCount);
 }
 
 bool
 PublishedMsg::Dereference()
 {
    this->refCount--;
-   if (this->refCount <= 0) {
-      delete msg;
-      msg = NULL;
-      return true;
-   }
-
-   return false;
+   return (this->refCount <= 0);
 }
 
 PublishSubscribeServer::PublishSubscribeServer(int port)
@@ -60,6 +45,9 @@ bool
 PublishSubscribeServer::HandleRequestInt(ReadRequest *request)
 {
    assert(request != NULL);
+   string httpRequest = string(request->buffer);
+   PublishSubscribeRequest psRequest;
+   psRequest.Translate(httpRequest);
    return true;
 }
 

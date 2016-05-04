@@ -4,9 +4,11 @@
 
 using namespace std;
 
+/* Keys required for parsing the http request. */
 static const string GET = "GET";
 static const string POST = "POST";
 static const string DELETE = "DELETE";
+static const string CONTENT_LENGTH = "Content-Length";
 
 enum class PublishSubscribeServerOp {
    SUBSCRIBE,

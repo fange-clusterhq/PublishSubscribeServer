@@ -152,7 +152,7 @@ class Server {
        * @params request The request containing the data received.
        * @return Is this request done or only a partial.
        */
-      bool HandleRequestInt(ReadRequest *request);
+      virtual bool HandleRequestInt(ReadRequest *request);
 
       /* @brief Queue the msg to the queue.
        *
