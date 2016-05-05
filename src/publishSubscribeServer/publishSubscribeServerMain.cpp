@@ -6,6 +6,13 @@
 #include "publishSubscribeServer.h"
 #include <iostream>
 
+void
+Usage()
+{
+   std::cout << "server [-p port]" << std::endl;
+   exit(EXIT_FAILURE);
+}
+
 int
 main(int argc,
      char **argv)
@@ -19,9 +26,12 @@ main(int argc,
             port = atoi(optarg);
             break;
          default:
-            std::cout << "server [-p port]" << std::endl;
-            exit(EXIT_FAILURE);
+            Usage();
       }
+   }
+
+   if (port == 0) {
+      Usage();
    }
 
    PublishSubscribeServer server = PublishSubscribeServer(port);

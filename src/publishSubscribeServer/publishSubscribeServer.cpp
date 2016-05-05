@@ -72,10 +72,12 @@ PublishSubscribeServer::HandleRequestInt(ReadRequest *request)
          return true;
    }
 
+   /* Queue up the response. */
    WriteRequest *response = new WriteRequest();
    response->clientFd = request->clientFd;
    string httpResponse = PublishSubscribeResponse::FormResponse(statusCode,
                                                                 msgOut);
+   /* Needs to copy the '\0' at the end, so size + 1. */
    memcpy(response->buffer, httpResponse.c_str(), httpResponse.size() + 1);
    response->numBytes = httpResponse.size() + 1;
    this->queueMsg(response->clientFd, response);
@@ -122,8 +124,8 @@ PublishSubscribeServer::Publish(const string &topic,
    assert(!msg.empty());
 
    /*
-    * If there is no user subscribe to the topic, then
-    * we don't need to publish this.
+    * If there is no user subscribe to the topic, then we don't need to publish
+    * this. We can fake OK.
     */
    auto it = this->topicSubscription.find(topic);
    if (it != this->topicSubscription.end()) {
@@ -138,6 +140,7 @@ PublishSubscribeServer::Publish(const string &topic,
 
    return OK;
 }
+
 
 int
 PublishSubscribeServer::GetNextMessage(const string &username,

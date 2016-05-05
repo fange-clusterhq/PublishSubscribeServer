@@ -1,3 +1,9 @@
+/*
+ * @file publishSubscribeServer/publishSubscribeRequest.cpp
+ * @brief Contains the methods to parse and handle different requests.
+ *
+ * @author Yihua Eric Fang (yihuaf)
+ */
 
 #include "publishSubscribeRequest.h"
 #include <cstring>
@@ -14,6 +20,7 @@ PublishSubscribeRequest::PublishSubscribeRequest()
 void
 PublishSubscribeRequest::Translate(string &httpRequest)
 {
+   /* Parse the HTTP Header. */
    struct request parsedRequest;
    request_parser parser = request_parser();
    auto ret = parser.parse(parsedRequest, httpRequest.begin(),
@@ -37,6 +44,7 @@ PublishSubscribeRequest::Translate(string &httpRequest)
    } else if (parsedRequest.method.compare(POST) == 0) {
       /* The iterator to the end of the header. */
       auto headerEnd = get<1>(ret);
+      /* There is two possibilities, so we need to check both. */
       if (!this->CheckAndParsePublish(parsedRequest, httpRequest, headerEnd)) {
          this->CheckAndParseSubscribe(parsedRequest.uri);
       }
@@ -78,6 +86,7 @@ PublishSubscribeRequest::CheckAndParsePublish(struct request &parsedRequest,
                                               string &httpRequest,
                                               string::iterator &headerEnd)
 {
+   /* Parsing out the content length first. */
    int contentLen = 0;
    for (auto &header : parsedRequest.headers) {
       if (header.name.compare(CONTENT_LENGTH) == 0) {
@@ -90,18 +99,21 @@ PublishSubscribeRequest::CheckAndParsePublish(struct request &parsedRequest,
       return false;
    }
 
+   /* Not enough bytes to match content length. */
    if (distance(headerEnd, httpRequest.end()) != contentLen) {
       this->opCode = PublishSubscribeServerOp::CONTINUE;
       return false;
    }
 
    this->msg = string(headerEnd, httpRequest.end());
+   /* Parsing topic out. */
    vector<string> tokenizedUri = this->ParseUriTokenize(parsedRequest.uri);
    if (tokenizedUri.size() != 2) {
       this->opCode = PublishSubscribeServerOp::ERROR;
       return false;
    }
 
+   /* In the form of /topic */
    this->topic = tokenizedUri[1];
    this->opCode = PublishSubscribeServerOp::PUBLISH;
    return true;
@@ -124,6 +136,7 @@ bool
 PublishSubscribeRequest::ParseTopicUsername(string &uri)
 {
    vector<string> tokenizedUri = this->ParseUriTokenize(uri);
+   /* In the form of /topic/username. So 3 items required from token. */
    if (tokenizedUri.size() != 3) {
       return false;
    }
@@ -152,17 +165,20 @@ PublishSubscribeResponse::FormResponse(int statusCode,
                                        string &body)
 {
    ostringstream oss;
+   /* Should always exist. */
    oss << responseTable[statusCode];
    oss << "\r\n";
-   if (body.size() > 0) {
+   /* Attach content length in the header. */
+   if (!body.empty()) {
       oss << CONTENT_LENGTH;
       oss << ": ";
       oss << body.size();
       oss << "\r\n";
    }
 
+   /* End of header. */
    oss << "\r\n";
-   if (body.size() > 0) {
+   if (!body.empty()) {
       oss << body;
    }
 
