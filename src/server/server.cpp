@@ -22,12 +22,14 @@ ReadRequest::ReadRequest()
 inline char *
 ReadRequest::GetBufferForRecv()
 {
+   /* Taken into account the the buffer may contain a partial message. */
    return this->buffer + this->numBytes;
 }
 
 inline size_t
 ReadRequest::GetSizeForRecv()
 {
+   /* Taken into account the the buffer may contain a partial message. */
    return MAX_MSG_BUFFER_SIZE - this->numBytes;
 }
 
@@ -78,11 +80,12 @@ Server::Start()
       }
 
       printf("Incoming request\n");
-
+      /* Handle new connection. */
       if (FD_ISSET(this->masterSocket, &this->readfds)) {
          AcceptConnection();
       }
 
+      /* Handle incoming requests. */
       for(auto it = this->clientContext.begin();
           it != this->clientContext.end();) {
          int clientFd = it->first;
@@ -92,6 +95,7 @@ Server::Start()
          }
       }
 
+      /* Handle outgoing messages/responses. */
       for(auto it = this->msgOutgoingQueue.begin();
           it != this->msgOutgoingQueue.end();) {
          int clientFd = it->first;
@@ -110,6 +114,10 @@ int
 Server::PrepareSelect()
 {
    int maxFd = this->masterSocket;
+   /*
+    * Adding all accepted connection to readfds and all fd that has pending
+    * messages in queue to the writefds.
+    */
    FD_ZERO(&this->readfds);
    FD_ZERO(&this->writefds);
    FD_SET(this->masterSocket, &this->readfds);
@@ -154,22 +162,35 @@ Server::AcceptConnection()
    return;
 }
 
+
 void
 Server::HandleRequest(int clientFd)
 {
-   map<int, ReadRequest *>::iterator it = this->clientContext.find(clientFd);
+   auto it = this->clientContext.find(clientFd);
    assert(it != this->clientContext.end());
+   /*
+    * It is possible that the last receive from this client only obtained
+    * a particial request. We would stored this particial request in the
+    * clientContext. If we did not have a particial request, then we
+    * create a new ReadRequest in the context.
+    */
    if (it->second == NULL) {
       it->second = new ReadRequest();
    }
 
    ReadRequest *request = it->second;
-   int bytes = read(clientFd, request->GetBufferForRecv(),
-                    request->GetSizeForRecv());
+   ssize_t bytes = read(clientFd, request->GetBufferForRecv(),
+                        request->GetSizeForRecv());
    if (bytes > 0) {
       request->clientFd = clientFd;
       request->numBytes += bytes;
       if (HandleRequestInt(request)) {
+         /*
+          * If HandleRequestInt tells us that the request received is complete
+          * or not a particial request, we can safely delete the request. Else,
+          * as the request is already stored in the context, we need to do
+          * nothing.
+          */
          delete request;
          it->second = NULL;
       }
@@ -178,6 +199,10 @@ Server::HandleRequest(int clientFd)
       close(clientFd);
       delete request;
       this->clientContext.erase(it);
+      /*
+       * Since the connection has closed, all pending msg to this fd should be
+       * dropped.
+       */
       this->msgOutgoingQueue.erase(clientFd);
       if (bytes < 0) {
          throw ("Failed to receive");
@@ -192,6 +217,7 @@ bool
 Server::HandleRequestInt(ReadRequest *request)
 {
    WriteRequest *newRequest = new WriteRequest();
+   /* By default, we echo back what we received. */
    newRequest->clientFd = request->clientFd;
    memcpy(newRequest->buffer, request->buffer, request->numBytes);
    newRequest->numBytes = request->numBytes;
@@ -216,6 +242,9 @@ Server::dequeueMsg(int clientFd)
       this->msgOutgoingQueue.find(clientFd);
    assert(it != this->msgOutgoingQueue.end());
    queue<WriteRequest *> &msgQueue = it->second;
+   /*
+    * We should not have an empty queue since we erased all the empty queue.
+    */
    assert(!msgQueue.empty());
    WriteRequest *request = msgQueue.front();
    msgQueue.pop();

@@ -24,6 +24,7 @@
 
 using namespace std;
 
+/* This is just a random choice. 64 seems to be reasonable. */
 static const int MAX_NUM_CONNECTION = 64;
 /* Ideally, a HTTP header should not exceeds this length. */
 static const int MAX_MSG_BUFFER_SIZE = 4096;
@@ -42,6 +43,7 @@ class Request {
 class ReadRequest : public Request {
    public:
       ReadRequest();
+
       /* @brief Return a pointer to the buffer for receiving new data.
        *
        * The pointer returned is the position of where the current buffer
@@ -51,6 +53,7 @@ class ReadRequest : public Request {
        * @return None.
        */
       inline char *GetBufferForRecv();
+
       /* @brief Return the size available in the buffer.
        *
        * As mentioned before, the buffer may have stored some data
@@ -154,7 +157,18 @@ class Server {
        */
       virtual bool HandleRequestInt(ReadRequest *request);
 
+      /* @brief Dequeue a msg from the message queue.
+       *
+       * @params clientFd The clientFd we want to dequeue a msg from.
+       * @return The Msg/Request we want to write out.
+       */
       WriteRequest *dequeueMsg(int clientFd);
+
+      /* @brief Handle the destination fd become writable.
+       *
+       * This function is called after the destination fd becomes writable.
+       * It will dequeue a message from the queue and sent out.
+       */
       void HandleOutgoingMsg(int clientFd);
 
    protected:
