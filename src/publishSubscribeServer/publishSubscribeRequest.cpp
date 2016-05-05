@@ -96,13 +96,14 @@ PublishSubscribeRequest::CheckAndParsePublish(struct request &parsedRequest,
    }
 
    this->msg = string(headerEnd, httpRequest.end());
-   printf("I recevied: %s\n", this->msg.c_str());
    vector<string> tokenizedUri = this->ParseUriTokenize(parsedRequest.uri);
-   if (tokenizedUri.size() != 1) {
+   if (tokenizedUri.size() != 2) {
+      this->opCode = PublishSubscribeServerOp::ERROR;
       return false;
    }
 
-   this->topic = tokenizedUri[0];
+   this->topic = tokenizedUri[1];
+   this->opCode = PublishSubscribeServerOp::PUBLISH;
    return true;
 }
 
@@ -123,12 +124,12 @@ bool
 PublishSubscribeRequest::ParseTopicUsername(string &uri)
 {
    vector<string> tokenizedUri = this->ParseUriTokenize(uri);
-   if (tokenizedUri.size() != 2) {
+   if (tokenizedUri.size() != 3) {
       return false;
    }
 
-   this->topic = tokenizedUri[0];
-   this->username = tokenizedUri[1];
+   this->topic = tokenizedUri[1];
+   this->username = tokenizedUri[2];
    return true;
 }
 
@@ -140,9 +141,30 @@ PublishSubscribeRequest::ParseUriTokenize(string &uri)
    string item;
    vector<string> result;
    while(getline(ss, item, delimiter)) {
-      printf("%s\n", item.c_str());
       result.push_back(item);
    }
 
    return result;
+}
+
+string
+PublishSubscribeResponse::FormResponse(int statusCode,
+                                       string &body)
+{
+   ostringstream oss;
+   oss << responseTable[statusCode];
+   oss << "\r\n";
+   if (body.size() > 0) {
+      oss << CONTENT_LENGTH;
+      oss << ": ";
+      oss << body.size();
+      oss << "\r\n";
+   }
+
+   oss << "\r\n";
+   if (body.size() > 0) {
+      oss << body;
+   }
+
+   return oss.str();
 }

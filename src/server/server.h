@@ -154,6 +154,10 @@ class Server {
        */
       virtual bool HandleRequestInt(ReadRequest *request);
 
+      WriteRequest *dequeueMsg(int clientFd);
+      void HandleOutgoingMsg(int clientFd);
+
+   protected:
       /* @brief Queue the msg to the queue.
        *
        * We first queue the messages to the queue. Then, the destnation fd will
@@ -165,7 +169,4 @@ class Server {
        * @return None.
        */
       void queueMsg(int clientFd, WriteRequest *request);
-
-      WriteRequest *dequeueMsg(int clientFd);
-      void HandleOutgoingMsg(int clientFd);
 };

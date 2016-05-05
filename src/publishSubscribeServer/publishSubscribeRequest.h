@@ -2,6 +2,7 @@
 
 #include <string>
 #include <vector>
+#include <map>
 
 using namespace std;
 
@@ -47,4 +48,17 @@ class PublishSubscribeRequest {
       bool ParseMsg();
       bool ParseTopicUsername(string &uri);
       vector<string> ParseUriTokenize(string &uri);
+};
+
+const static int OK = 200;
+const static int NO_CONTENT = 204;
+const static int NOT_FOUND = 404;
+static map<int, string> responseTable =
+   {{OK, "HTTP/1.0 200 OK"},
+    {NO_CONTENT, "HTTP/1.0 204 No Content"},
+    {NOT_FOUND, "HTTP/1.0 404 Not Found"}};
+
+class PublishSubscribeResponse {
+   public:
+      static string FormResponse(int statusCode, string &body);
 };

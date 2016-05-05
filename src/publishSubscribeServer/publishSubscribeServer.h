@@ -10,6 +10,7 @@
 #include <string>
 #include <map>
 #include <queue>
+#include <set>
 #include "publishSubscribeRequest.h"
 
 using namespace std;
@@ -58,8 +59,10 @@ class PublishSubscribeServer : public Server {
       explicit PublishSubscribeServer(int port);
       ~PublishSubscribeServer();
    private:
-      map<string, string> topicSubscription;
-      map<string, queue<PublishedMsg *>> msgQueue;
+      /* Topic -> Usernames mapping. */
+      map<string, set<string>> topicSubscription;
+      /* (Username, topic) -> message mapping. */
+      map<pair<string, string>, queue<PublishedMsg *>> msgQueue;
 
       /*
        * @brief Handle the incoming request.
@@ -77,31 +80,33 @@ class PublishSubscribeServer : public Server {
        *
        * @params username The user to be subscribed.
        * @params topic The topic to be subscribed to.
-       * @return None.
+       * @return Status code.
        */
-      void Subscribe(const string &username, const string &topic);
+      int Subscribe(const string &username, const string &topic);
       /*
        * @brief Unsubscribe a user to a topic.
        *
        * @params username The user to be unsubscribed.
        * @params topic The topic to be unsubscribed to.
-       * @return None.
+       * @return Status code.
        */
-      void Unsubscribe(const string &username, const string &topic);
+      int Unsubscribe(const string &username, const string &topic);
       /*
        * @brief Publish a message to a topic.
        *
        * @params topic The topic to be published.
        * @params msg The msg to be published.
-       * @return None.
+       * @return Status code.
        */
-      void Publish(const string &topic, string &msg);
+      int Publish(const string &topic, string &msg);
       /*
        * @brief Get the next msg from the topic for the user.
        *
        * @params username The user requesting the msg.
        * @params topic The topic to get.
-       * @return None.
+       * @params msgOut The next msg if present.
+       * @return Status code.
        */
-      void GetNextMessage(const string &username, const string &topic);
+      int GetNextMessage(const string &username, const string &topic,
+                         string &msgOut);
 };

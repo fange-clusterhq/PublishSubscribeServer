@@ -178,6 +178,7 @@ Server::HandleRequest(int clientFd)
       close(clientFd);
       delete request;
       this->clientContext.erase(it);
+      this->msgOutgoingQueue.erase(clientFd);
       if (bytes < 0) {
          throw ("Failed to receive");
       }
