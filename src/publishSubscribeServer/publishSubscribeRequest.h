@@ -45,5 +45,6 @@ class PublishSubscribeRequest {
                                 string::iterator &headerEnd);
       bool CheckAndParseGetNext(string &uri);
       bool ParseMsg();
+      bool ParseTopicUsername(string &uri);
       vector<string> ParseUriTokenize(string &uri);
 };

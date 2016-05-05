@@ -48,28 +48,26 @@ PublishSubscribeRequest::Translate(string &httpRequest)
 bool
 PublishSubscribeRequest::CheckAndParseSubscribe(string &uri)
 {
-   vector<string> tokenizedUri = this->ParseUriTokenize(uri);
-   if (tokenizedUri.size() != 2) {
+   if (this->ParseTopicUsername(uri)) {
+      this->opCode = PublishSubscribeServerOp::SUBSCRIBE;
+      return true;
+   } else {
+      this->opCode = PublishSubscribeServerOp::ERROR;
       return false;
    }
-
-   this->topic = tokenizedUri[0];
-   this->username = tokenizedUri[1];
-   return false;
 }
 
 
 bool
 PublishSubscribeRequest::CheckAndParseUnsubscribe(string &uri)
 {
-   vector<string> tokenizedUri = this->ParseUriTokenize(uri);
-   if (tokenizedUri.size() != 2) {
+   if (this->ParseTopicUsername(uri)) {
+      this->opCode = PublishSubscribeServerOp::UNSUBSCRIBE;
+      return true;
+   } else {
+      this->opCode = PublishSubscribeServerOp::ERROR;
       return false;
    }
-
-   this->topic = tokenizedUri[0];
-   this->username = tokenizedUri[1];
-   return false;
 }
 
 
@@ -78,12 +76,33 @@ PublishSubscribeRequest::CheckAndParsePublish(struct request &parsedRequest,
                                               string &httpRequest,
                                               string::iterator &headerEnd)
 {
+   int contentLen = 0;
+   for (auto &header : parsedRequest.headers) {
+      if (header.name.compare(CONTENT_LENGTH) == 0) {
+         contentLen = stoi(header.value, nullptr, 0);
+      }
+   }
+
+   httpRequest.c_str();
+   *headerEnd;
    return false;
 }
 
 
 bool
 PublishSubscribeRequest::CheckAndParseGetNext(string &uri)
+{
+   if (this->ParseTopicUsername(uri)) {
+      this->opCode = PublishSubscribeServerOp::GET_NEXT_MSG;
+      return true;
+   } else {
+      this->opCode = PublishSubscribeServerOp::ERROR;
+      return false;
+   }
+}
+
+bool
+PublishSubscribeRequest::ParseTopicUsername(string &uri)
 {
    vector<string> tokenizedUri = this->ParseUriTokenize(uri);
    if (tokenizedUri.size() != 2) {
@@ -92,7 +111,7 @@ PublishSubscribeRequest::CheckAndParseGetNext(string &uri)
 
    this->topic = tokenizedUri[0];
    this->username = tokenizedUri[1];
-   return false;
+   return true;
 }
 
 vector<string>
@@ -103,6 +122,7 @@ PublishSubscribeRequest::ParseUriTokenize(string &uri)
    string item;
    vector<string> result;
    while(getline(ss, item, delimiter)) {
+      printf("%s\n", item.c_str());
       result.push_back(item);
    }
 

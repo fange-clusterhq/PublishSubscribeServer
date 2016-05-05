@@ -3,7 +3,7 @@ from client import Client
 port = 10000
 
 def BasicHttpServerTest():
-    msg = "GET / HTTP/1.0\r\n\r\n"
+    msg = "GET /abcd/egs HTTP/1.0\r\n\r\n"
     client = Client(port)
     client.connect()
     client.send(msg)
