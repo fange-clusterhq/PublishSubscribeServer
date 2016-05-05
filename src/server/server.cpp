@@ -38,7 +38,7 @@ ReadRequest::Consume(size_t bytes)
 {
    assert(bytes <= this->numBytes);
 
-   if (bytes > this->numBytes) {
+   if (bytes == 0 || bytes > this->numBytes) {
       return;
    }
 

@@ -63,6 +63,18 @@ class ReadRequest : public Request {
        */
       inline size_t GetSizeForRecv();
 
+      /* @brief Consumed X number of bytes.
+       *
+       * One receive may receive multiple requests into 1 buffer since we
+       * do not know the boundary of the request until we process it. This
+       * function will remove X number of bytes from the buffer. It is used
+       * after processing one request successfully and remove the X bytes
+       * as the request processed. The leftover can be reinterpreted as a
+       * new request.
+       *
+       * @params bytes The number of bytes consumed.
+       * @return None.
+       */
       void Consume(size_t bytes);
 };
 
