@@ -199,6 +199,10 @@ PublishSubscribeServer::GetNextMessage(const string &username,
       if (msg->Dereference()) {
          delete msg;
       }
+
+      if (it->second.empty()) {
+         this->msgQueue.erase(it);
+      }
    } else {
       return NO_CONTENT;
    }
