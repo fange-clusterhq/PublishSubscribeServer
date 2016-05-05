@@ -37,10 +37,13 @@ class PublishSubscribeRequest {
       /*
        * @brief Translate from a httpRequest to a publish subscibe request.
        *
+       * This function will try to translate and return the number of bytes
+       * that currently being translated.
+       *
        * @params httpRequest The HTTP request to be parsed and translated.
-       * @return None.
+       * @return number of bytes consumed.
        */
-      void Translate(string &httpRequest);
+      size_t Translate(string &httpRequest);
 
       PublishSubscribeServerOp opCode;
       string username;
@@ -55,17 +58,12 @@ class PublishSubscribeRequest {
        * and the topic.
        *
        * @params uri Thr uri received.
-       * @params parsedRequest Contains the parsed HTTP header.
-       * @params httpRequest Original HTTP request. Contains the content.
-       * @params headerEnd Pointing to the end of header in the httpRequest.
        * @return Was parsing successfull?
        */
       bool CheckAndParseSubscribe(string &uri);
       bool CheckAndParseUnsubscribe(string &uri);
       bool CheckAndParseGetNext(string &uri);
-      bool CheckAndParsePublish(struct request &parsedRequest,
-                                string &httpRequest,
-                                string::iterator &headerEnd);
+      bool CheckAndParsePublish(string &uri);
 
       /*
        * @brief Parse out the username and topic from the uri.

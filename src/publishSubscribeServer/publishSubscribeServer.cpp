@@ -45,42 +45,59 @@ bool
 PublishSubscribeServer::HandleRequestInt(ReadRequest *request)
 {
    assert(request != NULL);
+   for(;;) {
+      assert(request->numBytes > 0);
 
-   string httpRequest = string(request->buffer);
-   PublishSubscribeRequest psRequest;
-   psRequest.Translate(httpRequest);
-   int statusCode;
-   string msgOut;
-   switch(psRequest.opCode) {
-      case PublishSubscribeServerOp::SUBSCRIBE:
-         statusCode = this->Subscribe(psRequest.username, psRequest.topic);
+      /*
+       * Translate the received request as http request and into operations
+       * this server supports.
+       */
+      string httpRequest = string(request->buffer);
+      PublishSubscribeRequest psRequest;
+      size_t bytesConsumed = psRequest.Translate(httpRequest);
+      printf("Consumed %d bytes\n", (int)bytesConsumed);
+      printf("Total %d bytes\n", (int)request->numBytes);
+      int statusCode;
+      string msgOut;
+      switch(psRequest.opCode) {
+         case PublishSubscribeServerOp::SUBSCRIBE:
+            statusCode = this->Subscribe(psRequest.username, psRequest.topic);
+            break;
+         case PublishSubscribeServerOp::UNSUBSCRIBE:
+            statusCode = this->Unsubscribe(psRequest.username, psRequest.topic);
+            break;
+         case PublishSubscribeServerOp::PUBLISH:
+            statusCode = this->Publish(psRequest.topic, psRequest.msg);
+            break;
+         case PublishSubscribeServerOp::GET_NEXT_MSG:
+            statusCode = this->GetNextMessage(psRequest.topic, psRequest.username,
+                                              msgOut);
+            break;
+         case PublishSubscribeServerOp::CONTINUE:
+            return false;
+         case PublishSubscribeServerOp::ERROR:
+            /* In error case, we simply drop the meesage and fake success. */
+            request->Consume(bytesConsumed);
+            return true;
+         default:
+            assert(false);
+      }
+
+      /* Queue up the response. */
+      WriteRequest *response = new WriteRequest();
+      response->clientFd = request->clientFd;
+      string httpResponse = PublishSubscribeResponse::FormResponse(statusCode,
+                                                                   msgOut);
+      /* Needs to copy the '\0' at the end, so size + 1. */
+      memcpy(response->buffer, httpResponse.c_str(), httpResponse.size() + 1);
+      response->numBytes = httpResponse.size() + 1;
+      this->queueMsg(response->clientFd, response);
+      request->Consume(bytesConsumed);
+      if (request->numBytes == 0) {
          break;
-      case PublishSubscribeServerOp::UNSUBSCRIBE:
-         statusCode = this->Unsubscribe(psRequest.username, psRequest.topic);
-         break;
-      case PublishSubscribeServerOp::PUBLISH:
-         statusCode = this->Publish(psRequest.topic, psRequest.msg);
-         break;
-      case PublishSubscribeServerOp::GET_NEXT_MSG:
-         statusCode = this->GetNextMessage(psRequest.topic, psRequest.username,
-                                           msgOut);
-         break;
-      case PublishSubscribeServerOp::CONTINUE:
-         return false;
-      default:
-         /* In error case, we simply drop the meesage and fake success. */
-         return true;
+      }
    }
 
-   /* Queue up the response. */
-   WriteRequest *response = new WriteRequest();
-   response->clientFd = request->clientFd;
-   string httpResponse = PublishSubscribeResponse::FormResponse(statusCode,
-                                                                msgOut);
-   /* Needs to copy the '\0' at the end, so size + 1. */
-   memcpy(response->buffer, httpResponse.c_str(), httpResponse.size() + 1);
-   response->numBytes = httpResponse.size() + 1;
-   this->queueMsg(response->clientFd, response);
    return true;
 }
 

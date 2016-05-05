@@ -33,6 +33,22 @@ ReadRequest::GetSizeForRecv()
    return MAX_MSG_BUFFER_SIZE - this->numBytes;
 }
 
+void
+ReadRequest::Consume(size_t bytes)
+{
+   assert(bytes <= this->numBytes);
+
+   if (bytes > this->numBytes) {
+      return;
+   }
+
+   memcpy(this->buffer, this->buffer + bytes, this->numBytes - bytes);
+   this->numBytes -= bytes;
+   /* NULL terminates the buffer so we can use string lib. */
+   this->buffer[this->numBytes] = '\0';
+   return;
+}
+
 WriteRequest::WriteRequest()
    :Request()
 {}

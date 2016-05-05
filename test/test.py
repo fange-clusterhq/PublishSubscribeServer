@@ -12,6 +12,8 @@ def ContentTest():
     time.sleep(1)
     msg = "POST /CMU HTTP/1.0\r\nContent-Length: 5\r\n\r\nHello"
     client.send(msg)
+    msg = "POST /CMU HTTP/1.0\r\nContent-Length: 5\r\n\r\nWorld"
+    client.send(msg)
     client.close()
 
 def BasicHttpServerTest():

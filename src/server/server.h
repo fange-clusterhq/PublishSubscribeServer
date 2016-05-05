@@ -62,6 +62,8 @@ class ReadRequest : public Request {
        * @return None.
        */
       inline size_t GetSizeForRecv();
+
+      void Consume(size_t bytes);
 };
 
 class WriteRequest : public Request {

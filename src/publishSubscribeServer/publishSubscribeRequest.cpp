@@ -17,9 +17,10 @@ PublishSubscribeRequest::PublishSubscribeRequest()
 {
 }
 
-void
+size_t
 PublishSubscribeRequest::Translate(string &httpRequest)
 {
+   size_t bytesConsumed = 0;
    /* Parse the HTTP Header. */
    struct request parsedRequest;
    request_parser parser = request_parser();
@@ -28,31 +29,59 @@ PublishSubscribeRequest::Translate(string &httpRequest)
    if (get<0>(ret) == request_parser::bad) {
       this->opCode = PublishSubscribeServerOp::ERROR;
       printf("PARSING ERROR\n");
-      return;
+      return 0;
    } else if (get<0>(ret) == request_parser::indeterminate) {
       printf("INDETERMIN\n");
       this->opCode = PublishSubscribeServerOp::CONTINUE;
-      return;
+      return 0;
    }
 
    HTTPRequestToString(parsedRequest);
+   /* The iterator to the end of the header. */
+   auto headerEnd = get<1>(ret);
+   bytesConsumed += distance(httpRequest.begin(), headerEnd);
+   /* Parsing out the content length first. */
+   int contentLen = 0;
+   for (auto &header : parsedRequest.headers) {
+      if (header.name.compare(CONTENT_LENGTH) == 0) {
+         contentLen = stoi(header.value, nullptr, 0);
+      }
+   }
+
+   if (contentLen > 0) {
+      /* Not enough bytes to match content length. */
+      if (distance(headerEnd, httpRequest.end()) < contentLen) {
+         this->opCode = PublishSubscribeServerOp::CONTINUE;
+         return 0;
+      }
+
+      this->msg = string(headerEnd, httpRequest.end());
+      bytesConsumed += contentLen;
+   }
 
    if (parsedRequest.method.compare(GET) == 0) {
       this->CheckAndParseSubscribe(parsedRequest.uri);
    } else if (parsedRequest.method.compare(DELETE) == 0) {
       this->CheckAndParseUnsubscribe(parsedRequest.uri);
    } else if (parsedRequest.method.compare(POST) == 0) {
-      /* The iterator to the end of the header. */
-      auto headerEnd = get<1>(ret);
       /* There is two possibilities, so we need to check both. */
-      if (!this->CheckAndParsePublish(parsedRequest, httpRequest, headerEnd)) {
+      if (!this->CheckAndParsePublish(parsedRequest.uri)) {
          this->CheckAndParseSubscribe(parsedRequest.uri);
       }
+   } else {
+      /*
+       * The request is a valid http request, but not a request we recognize.
+       * We choose to drop this http request. Note, we do not drop any other
+       * request if the is more than one request in the bytes received. Thus,
+       * we return the bytes consumed.
+       */
+      this->opCode = PublishSubscribeServerOp::ERROR;
    }
 
    /* Before returning, the op code should have been set. */
    assert(this->opCode != PublishSubscribeServerOp::FIRST);
-   return;
+   assert(bytesConsumed > 0);
+   return bytesConsumed;
 }
 
 bool
@@ -82,32 +111,16 @@ PublishSubscribeRequest::CheckAndParseUnsubscribe(string &uri)
 
 
 bool
-PublishSubscribeRequest::CheckAndParsePublish(struct request &parsedRequest,
-                                              string &httpRequest,
-                                              string::iterator &headerEnd)
+PublishSubscribeRequest::CheckAndParsePublish(string &uri)
 {
-   /* Parsing out the content length first. */
-   int contentLen = 0;
-   for (auto &header : parsedRequest.headers) {
-      if (header.name.compare(CONTENT_LENGTH) == 0) {
-         contentLen = stoi(header.value, nullptr, 0);
-      }
-   }
-
-   if (contentLen <= 0) {
+   /* Publish must have a content with it. */
+   if (this->msg.empty()) {
       this->opCode = PublishSubscribeServerOp::ERROR;
       return false;
    }
 
-   /* Not enough bytes to match content length. */
-   if (distance(headerEnd, httpRequest.end()) != contentLen) {
-      this->opCode = PublishSubscribeServerOp::CONTINUE;
-      return false;
-   }
-
-   this->msg = string(headerEnd, httpRequest.end());
    /* Parsing topic out. */
-   vector<string> tokenizedUri = this->ParseUriTokenize(parsedRequest.uri);
+   vector<string> tokenizedUri = this->ParseUriTokenize(uri);
    if (tokenizedUri.size() != 2) {
       this->opCode = PublishSubscribeServerOp::ERROR;
       return false;
