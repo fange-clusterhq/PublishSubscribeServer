@@ -95,7 +95,6 @@ Server::Start()
          continue;
       }
 
-      printf("Incoming request\n");
       /* Handle new connection. */
       if (FD_ISSET(this->masterSocket, &this->readfds)) {
          AcceptConnection();

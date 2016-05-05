@@ -60,7 +60,7 @@ PublishSubscribeRequest::Translate(string &httpRequest)
    }
 
    if (parsedRequest.method.compare(GET) == 0) {
-      this->CheckAndParseSubscribe(parsedRequest.uri);
+      this->CheckAndParseGetNext(parsedRequest.uri);
    } else if (parsedRequest.method.compare(DELETE) == 0) {
       this->CheckAndParseUnsubscribe(parsedRequest.uri);
    } else if (parsedRequest.method.compare(POST) == 0) {
@@ -195,5 +195,6 @@ PublishSubscribeResponse::FormResponse(int statusCode,
       oss << body;
    }
 
+   //printf("Formed Response: %s\n", oss.str().c_str());
    return oss.str();
 }

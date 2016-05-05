@@ -55,8 +55,6 @@ PublishSubscribeServer::HandleRequestInt(ReadRequest *request)
       string httpRequest = string(request->buffer);
       PublishSubscribeRequest psRequest;
       size_t bytesConsumed = psRequest.Translate(httpRequest);
-      printf("Consumed %d bytes\n", (int)bytesConsumed);
-      printf("Total %d bytes\n", (int)request->numBytes);
       int statusCode;
       string msgOut;
       switch(psRequest.opCode) {
@@ -70,7 +68,7 @@ PublishSubscribeServer::HandleRequestInt(ReadRequest *request)
             statusCode = this->Publish(psRequest.topic, psRequest.msg);
             break;
          case PublishSubscribeServerOp::GET_NEXT_MSG:
-            statusCode = this->GetNextMessage(psRequest.topic, psRequest.username,
+            statusCode = this->GetNextMessage(psRequest.username, psRequest.topic,
                                               msgOut);
             break;
          case PublishSubscribeServerOp::CONTINUE:
@@ -108,6 +106,8 @@ PublishSubscribeServer::Subscribe(const string &username,
    assert(!username.empty());
    assert(!topic.empty());
 
+   printf("[Subscribe] Topic: %s Username: %s\n", topic.c_str(),
+          username.c_str());
    this->topicSubscription[topic].insert(username);
    return OK;
 }
@@ -119,6 +119,8 @@ PublishSubscribeServer::Unsubscribe(const string &username,
    assert(!username.empty());
    assert(!topic.empty());
 
+   printf("[Unsubscribe] Topic: %s Username: %s\n", topic.c_str(),
+          username.c_str());
    int ret = OK;
    auto it = this->topicSubscription.find(topic);
    if (it != this->topicSubscription.end()) {
@@ -139,6 +141,8 @@ PublishSubscribeServer::Publish(const string &topic,
 {
    assert(!topic.empty());
    assert(!msg.empty());
+   printf("[Publish] Topic: %s Content: %s\n", topic.c_str(),
+          msg.c_str());
 
    /*
     * If there is no user subscribe to the topic, then we don't need to publish
@@ -148,7 +152,6 @@ PublishSubscribeServer::Publish(const string &topic,
    if (it != this->topicSubscription.end()) {
       set<string> &usernames = it->second;
       PublishedMsg *publishedMsg = new PublishedMsg(msg, usernames.size());
-      printf("Published '%s' to topic '%s'\n", msg.c_str(), topic.c_str());
       for(auto &user : usernames) {
          pair<string, string> msgQueueKey(user, topic);
          this->msgQueue[msgQueueKey].push(publishedMsg);
@@ -167,6 +170,8 @@ PublishSubscribeServer::GetNextMessage(const string &username,
    assert(!username.empty());
    assert(!topic.empty());
 
+   printf("[GetNext] Topic: %s Username: %s\n", topic.c_str(),
+          username.c_str());
    /*
     * Find out if the username subscribed to the topic.
     * Either the topic has no subscriber or the user is not on the subscriber
@@ -174,10 +179,12 @@ PublishSubscribeServer::GetNextMessage(const string &username,
     */
    auto topicSubscriptionIt = this->topicSubscription.find(topic);
    if (topicSubscriptionIt == this->topicSubscription.end()) {
+      printf("Not found 1\n");
       return NOT_FOUND;
    } else {
       auto usernamesIt = topicSubscriptionIt->second.find(username);
       if (usernamesIt == topicSubscriptionIt->second.end()) {
+      printf("Not found 2\n");
          return NOT_FOUND;
       }
    }
@@ -196,5 +203,6 @@ PublishSubscribeServer::GetNextMessage(const string &username,
       return NO_CONTENT;
    }
 
+   printf("[GetNext] Out content: %s\n", msgOut.c_str());
    return OK;
 }
