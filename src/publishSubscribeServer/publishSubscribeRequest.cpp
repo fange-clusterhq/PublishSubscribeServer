@@ -20,8 +20,10 @@ PublishSubscribeRequest::Translate(string &httpRequest)
                            httpRequest.end());
    if (get<0>(ret) == request_parser::bad) {
       this->opCode = PublishSubscribeServerOp::ERROR;
+      printf("PARSING ERROR\n");
       return;
    } else if (get<0>(ret) == request_parser::indeterminate) {
+      printf("INDETERMIN\n");
       this->opCode = PublishSubscribeServerOp::CONTINUE;
       return;
    }
@@ -83,9 +85,25 @@ PublishSubscribeRequest::CheckAndParsePublish(struct request &parsedRequest,
       }
    }
 
-   httpRequest.c_str();
-   *headerEnd;
-   return false;
+   if (contentLen <= 0) {
+      this->opCode = PublishSubscribeServerOp::ERROR;
+      return false;
+   }
+
+   if (distance(headerEnd, httpRequest.end()) != contentLen) {
+      this->opCode = PublishSubscribeServerOp::CONTINUE;
+      return false;
+   }
+
+   this->msg = string(headerEnd, httpRequest.end());
+   printf("I recevied: %s\n", this->msg.c_str());
+   vector<string> tokenizedUri = this->ParseUriTokenize(parsedRequest.uri);
+   if (tokenizedUri.size() != 1) {
+      return false;
+   }
+
+   this->topic = tokenizedUri[0];
+   return true;
 }
 
 

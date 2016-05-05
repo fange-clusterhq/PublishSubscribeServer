@@ -1,21 +1,29 @@
 from client import Client
+import time
 
 port = 10000
+
+def ContentTest():
+    # Testing the server with POST request with content
+    msg = "POST /abcd HTTP/1.0\r\nContent-Length: 5\r\n\r\nabcde"
+    client = Client(port)
+    client.connect()
+    client.send(msg)
+    client.close()
 
 def BasicHttpServerTest():
     msg = "GET /abcd/egs HTTP/1.0\r\n\r\n"
     client = Client(port)
     client.connect()
     client.send(msg)
-    recv_msg = client.recv(len(msg))
-    print recv_msg
-    if msg != recv_msg:
-        raise Exception("Failed EchoServer Test")
+    time.sleep(1)
+    client.send(msg)
     client.close()
     return
 
 def Test():
-    BasicHttpServerTest()
+    #BasicHttpServerTest()
+    ContentTest()
     return
 
 if __name__ == "__main__":

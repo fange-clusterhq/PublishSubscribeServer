@@ -44,6 +44,7 @@ PublishSubscribeServer::~PublishSubscribeServer()
 bool
 PublishSubscribeServer::HandleRequestInt(ReadRequest *request)
 {
+   printf("HELLP\n");
    assert(request != NULL);
    string httpRequest = string(request->buffer);
    PublishSubscribeRequest psRequest;

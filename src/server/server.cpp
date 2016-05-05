@@ -77,6 +77,8 @@ Server::Start()
          continue;
       }
 
+      printf("Incoming request\n");
+
       if (FD_ISSET(this->masterSocket, &this->readfds)) {
          AcceptConnection();
       }
@@ -172,6 +174,7 @@ Server::HandleRequest(int clientFd)
          it->second = NULL;
       }
    } else {
+      printf("Connection Closed\n");
       close(clientFd);
       delete request;
       this->clientContext.erase(it);
