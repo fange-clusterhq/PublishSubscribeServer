@@ -179,12 +179,10 @@ PublishSubscribeServer::GetNextMessage(const string &username,
     */
    auto topicSubscriptionIt = this->topicSubscription.find(topic);
    if (topicSubscriptionIt == this->topicSubscription.end()) {
-      printf("Not found 1\n");
       return NOT_FOUND;
    } else {
       auto usernamesIt = topicSubscriptionIt->second.find(username);
       if (usernamesIt == topicSubscriptionIt->second.end()) {
-      printf("Not found 2\n");
          return NOT_FOUND;
       }
    }
