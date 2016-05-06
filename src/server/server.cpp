@@ -13,7 +13,9 @@ using namespace std;
 Request::Request()
    :clientFd(0),
     numBytes(0)
-{}
+{
+   memset(this->buffer, 0, MAX_MSG_BUFFER_SIZE);
+}
 
 ReadRequest::ReadRequest()
    :Request()
@@ -62,6 +64,7 @@ Server::~Server() {}
 void
 Server::Init()
 {
+   signal(SIGPIPE, SIG_IGN);
    struct sockaddr_in address;
 
    if ((this->masterSocket = socket(AF_INET, SOCK_STREAM ,0)) == 0) {
@@ -220,7 +223,7 @@ Server::HandleRequest(int clientFd)
        */
       this->msgOutgoingQueue.erase(clientFd);
       if (bytes < 0) {
-         throw ("Failed to receive");
+         perror("Failed to receive");
       }
    }
 
@@ -283,7 +286,12 @@ Server::HandleOutgoingMsg(int clientFd)
       ret = send(clientFd, request->buffer,
                  request->numBytes - numBytesActualSend, 0);
       if (ret < 0) {
+         /*
+          * We simply drop the write request in the case there is a write
+          * error.
+          */
          perror("Failed to send");
+         break;
       }
 
       numBytesActualSend += ret;

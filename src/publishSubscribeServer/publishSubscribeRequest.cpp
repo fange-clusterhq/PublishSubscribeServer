@@ -28,10 +28,9 @@ PublishSubscribeRequest::Translate(string &httpRequest)
                            httpRequest.end());
    if (get<0>(ret) == request_parser::bad) {
       this->opCode = PublishSubscribeServerOp::ERROR;
-      printf("PARSING ERROR\n");
-      return 0;
+      /* Drop the entire request if it is bad. */
+      return httpRequest.size();
    } else if (get<0>(ret) == request_parser::indeterminate) {
-      printf("INDETERMIN\n");
       this->opCode = PublishSubscribeServerOp::CONTINUE;
       return 0;
    }
@@ -204,5 +203,6 @@ PublishSubscribeResponse::FormResponse(int statusCode,
       oss << body;
    }
 
+   printf("[Response] %s\n", oss.str().c_str());
    return oss.str();
 }

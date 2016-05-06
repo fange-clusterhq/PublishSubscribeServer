@@ -91,15 +91,20 @@ class PublishSubscribeRequest {
  */
 const static int OK = 200;
 const static int NO_CONTENT = 204;
+const static int BAD_REQUEST = 400;
 const static int NOT_FOUND = 404;
+
 /*
  * Since these are the only response possible for this server, we choose to
  * hardcode them in advance.
  */
 static map<int, string> responseTable =
-   {{OK, "HTTP/1.0 200 OK"},
-    {NO_CONTENT, "HTTP/1.0 204 No Content"},
-    {NOT_FOUND, "HTTP/1.0 404 Not Found"}};
+   {
+      {OK, "HTTP/1.1 200 OK"},
+      {NO_CONTENT, "HTTP/1.1 204 No Content"},
+      {BAD_REQUEST, "HTTP/1.1 400 Bad Request"},
+      {NOT_FOUND, "HTTP/1.1 404 Not Found"}
+   };
 
 class PublishSubscribeResponse {
    public:
