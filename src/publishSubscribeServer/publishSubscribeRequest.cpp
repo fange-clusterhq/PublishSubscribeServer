@@ -17,6 +17,7 @@ PublishSubscribeRequest::PublishSubscribeRequest()
 {
 }
 
+
 size_t
 PublishSubscribeRequest::Translate(string &httpRequest)
 {
@@ -35,7 +36,6 @@ PublishSubscribeRequest::Translate(string &httpRequest)
       return 0;
    }
 
-   // HTTPRequestToString(parsedRequest);
    /* The iterator to the end of the header. */
    auto headerEnd = get<1>(ret);
    bytesConsumed += distance(httpRequest.begin(), headerEnd);
@@ -58,6 +58,7 @@ PublishSubscribeRequest::Translate(string &httpRequest)
       bytesConsumed += contentLen;
    }
 
+   /* Parse uri in different ways based on the request. */
    if (parsedRequest.method.compare(GET) == 0) {
       this->CheckAndParseGetNext(parsedRequest.uri);
    } else if (parsedRequest.method.compare(DELETE) == 0) {
@@ -83,6 +84,7 @@ PublishSubscribeRequest::Translate(string &httpRequest)
    return bytesConsumed;
 }
 
+
 bool
 PublishSubscribeRequest::CheckAndParseSubscribe(string &uri)
 {
@@ -94,6 +96,7 @@ PublishSubscribeRequest::CheckAndParseSubscribe(string &uri)
       return false;
    }
 }
+
 
 
 bool
@@ -125,7 +128,7 @@ PublishSubscribeRequest::CheckAndParsePublish(string &uri)
       return false;
    }
 
-   /* In the form of /topic */
+   /* In the form of /topic. There will be an empty item in the beginning. */
    this->topic = tokenizedUri[1];
    if (this->topic.empty()) {
       this->opCode = PublishSubscribeServerOp::ERROR;
@@ -149,11 +152,15 @@ PublishSubscribeRequest::CheckAndParseGetNext(string &uri)
    }
 }
 
+
 bool
 PublishSubscribeRequest::ParseTopicUsername(string &uri)
 {
    vector<string> tokenizedUri = this->ParseUriTokenize(uri);
-   /* In the form of /topic/username. So 3 items required from token. */
+   /*
+    * In the form of /topic/username. So 3 items required from token.  There
+    * will be am empty item in the beginning.
+    */
    if (tokenizedUri.size() != 3) {
       return false;
    }
@@ -167,9 +174,14 @@ PublishSubscribeRequest::ParseTopicUsername(string &uri)
    return true;
 }
 
+
 vector<string>
 PublishSubscribeRequest::ParseUriTokenize(string &uri)
 {
+   /*
+    * Uri are in the form of /<string>/<string/. The leading / will lead to an
+    * empty item being parsed, which matches the definition of tokenize.
+    */
    char delimiter = '/';
    stringstream ss(uri);
    string item;
@@ -180,6 +192,7 @@ PublishSubscribeRequest::ParseUriTokenize(string &uri)
 
    return result;
 }
+
 
 string
 PublishSubscribeResponse::FormResponse(int statusCode,

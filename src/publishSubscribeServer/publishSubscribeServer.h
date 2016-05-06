@@ -26,6 +26,7 @@ class PublishedMsg {
        * @return None.
        */
       PublishedMsg(string &msg, int refCount);
+
       /*
        * @brief The copy constrctor.
        *
@@ -50,7 +51,9 @@ class PublishedMsg {
        */
       bool Dereference();
 
+      /* Published Msg. */
       string msg;
+      /* Set to the number of subscriber at the time. */
       int refCount;
 };
 
@@ -75,6 +78,7 @@ class PublishSubscribeServer : public Server {
        *         is indetermined and need more.
        */
       bool HandleRequestInt(ReadRequest *request);
+
       /*
        * @brief Subscribe a user to a topic.
        *
@@ -83,6 +87,7 @@ class PublishSubscribeServer : public Server {
        * @return Status code.
        */
       int Subscribe(const string &username, const string &topic);
+
       /*
        * @brief Unsubscribe a user to a topic.
        *
@@ -91,6 +96,7 @@ class PublishSubscribeServer : public Server {
        * @return Status code.
        */
       int Unsubscribe(const string &username, const string &topic);
+
       /*
        * @brief Publish a message to a topic.
        *
@@ -99,6 +105,7 @@ class PublishSubscribeServer : public Server {
        * @return Status code.
        */
       int Publish(const string &topic, string &msg);
+
       /*
        * @brief Get the next msg from the topic for the user.
        *

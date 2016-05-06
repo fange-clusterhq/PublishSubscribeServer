@@ -17,9 +17,11 @@ Request::Request()
    memset(this->buffer, 0, MAX_MSG_BUFFER_SIZE);
 }
 
+
 ReadRequest::ReadRequest()
    :Request()
 {}
+
 
 inline char *
 ReadRequest::GetBufferForRecv()
@@ -28,12 +30,14 @@ ReadRequest::GetBufferForRecv()
    return this->buffer + this->numBytes;
 }
 
+
 inline size_t
 ReadRequest::GetSizeForRecv()
 {
    /* Taken into account the the buffer may contain a partial message. */
    return MAX_MSG_BUFFER_SIZE - this->numBytes;
 }
+
 
 void
 ReadRequest::Consume(size_t bytes)
@@ -51,22 +55,29 @@ ReadRequest::Consume(size_t bytes)
    return;
 }
 
+
 WriteRequest::WriteRequest()
    :Request()
 {}
+
 
 Server::Server(int port)
 :port(port)
 {}
 
+
 Server::~Server() {}
+
 
 void
 Server::Init()
 {
+   /*
+    * There is no signal solution for ignore the SIGPIPE except for set the
+    * handler to ignore. Mac and Linux solution are not interchangable.
+    */
    signal(SIGPIPE, SIG_IGN);
    struct sockaddr_in address;
-
    if ((this->masterSocket = socket(AF_INET, SOCK_STREAM ,0)) == 0) {
       throw ("Failed to initiate the master socket");
    }
@@ -85,6 +96,7 @@ Server::Init()
 
    return;
 }
+
 
 void
 Server::Start()
@@ -158,6 +170,7 @@ Server::PrepareSelect()
    return maxFd;
 }
 
+
 void
 Server::AcceptConnection()
 {
@@ -168,7 +181,8 @@ Server::AcceptConnection()
    if ((newClientFd = accept(this->masterSocket,
                              (struct sockaddr *)&address,
                              (socklen_t*)&addrlen))<0) {
-      throw ("Fail to accept");
+      perror("Fail to accept");
+      return;
    }
 
    /*
@@ -202,6 +216,7 @@ Server::HandleRequest(int clientFd)
    if (bytes > 0) {
       request->clientFd = clientFd;
       request->numBytes += bytes;
+      /* Actual Handler. The derived class should implement its own. */
       if (HandleRequestInt(request)) {
          /*
           * If HandleRequestInt tells us that the request received is complete

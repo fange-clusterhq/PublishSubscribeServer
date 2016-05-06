@@ -31,7 +31,7 @@ static const int MAX_MSG_BUFFER_SIZE = 4096;
 
 class Request {
    public:
-      /* This request is received from thsi client. */
+      /* This request is received from this client. */
       int clientFd;
       char buffer[MAX_MSG_BUFFER_SIZE];
       size_t numBytes;
@@ -85,12 +85,14 @@ class WriteRequest : public Request {
 
 class Server {
    public:
+
       /* @brief Constructor.
        *
        * @param port The port this server will listen to.
        * @return None.
        */
       Server(int port);
+
       /* @brief Destructor.
        *
        * @return None.
@@ -106,17 +108,20 @@ class Server {
        * @return None.
        */
       void Init();
+
       /* @brief Start the server and serving forever.
        *
        * @return None.
        */
       void Start();
    private:
+
       /* Listening to this port. */
       int port;
       /* Fd sets for the select(). */
       fd_set readfds;
       fd_set writefds;
+
       /* Socket used for the server to accept new connections. */
       int masterSocket;
       /*
@@ -126,6 +131,7 @@ class Server {
        * request.
        */
       map<int, ReadRequest *> clientContext;
+
       /*
        * Store all the pending out going messages.
        */
@@ -184,8 +190,8 @@ class Server {
        * It will dequeue a message from the queue and sent out.
        */
       void HandleOutgoingMsg(int clientFd);
-
    protected:
+
       /* @brief Queue the msg to the queue.
        *
        * We first queue the messages to the queue. Then, the destnation fd will

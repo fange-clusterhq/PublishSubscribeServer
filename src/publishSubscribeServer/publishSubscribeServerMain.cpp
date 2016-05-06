@@ -1,17 +1,24 @@
 /*
  * @file main.c
  * @brief The main function for the Publish Subscribe Server
+ * @author Yihua Eric Fang (yihuaf)
  */
 
 #include "publishSubscribeServer.h"
 #include <iostream>
 
+/*
+ * @brief Print out the usage.
+ *
+ * @return None.
+ */
 void
 Usage()
 {
    std::cout << "server [-p port]" << std::endl;
    exit(EXIT_FAILURE);
 }
+
 
 int
 main(int argc,
@@ -34,6 +41,7 @@ main(int argc,
       Usage();
    }
 
+   /* Start the server. */
    PublishSubscribeServer server = PublishSubscribeServer(port);
    server.Init();
    try {

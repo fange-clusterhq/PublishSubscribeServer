@@ -15,16 +15,19 @@ PublishedMsg::PublishedMsg()
     refCount(0)
 {}
 
+
 PublishedMsg::PublishedMsg(string &msg,
                            int refCount)
    :msg(msg),
     refCount(refCount)
 {}
 
+
 PublishedMsg::PublishedMsg(PublishedMsg &msg)
 {
    PublishedMsg(msg.msg, msg.refCount);
 }
+
 
 bool
 PublishedMsg::Dereference()
@@ -33,13 +36,16 @@ PublishedMsg::Dereference()
    return (this->refCount <= 0);
 }
 
+
 PublishSubscribeServer::PublishSubscribeServer(int port)
    :Server(port)
 {}
 
+
 PublishSubscribeServer::~PublishSubscribeServer()
 {
 }
+
 
 bool
 PublishSubscribeServer::HandleRequestInt(ReadRequest *request)
@@ -57,6 +63,7 @@ PublishSubscribeServer::HandleRequestInt(ReadRequest *request)
       size_t bytesConsumed = psRequest.Translate(httpRequest);
       int statusCode;
       string msgOut;
+      /* Dispatching based on parsed op code. */
       switch(psRequest.opCode) {
          case PublishSubscribeServerOp::SUBSCRIBE:
             statusCode = this->Subscribe(psRequest.username, psRequest.topic);
@@ -68,10 +75,14 @@ PublishSubscribeServer::HandleRequestInt(ReadRequest *request)
             statusCode = this->Publish(psRequest.topic, psRequest.msg);
             break;
          case PublishSubscribeServerOp::GET_NEXT_MSG:
-            statusCode = this->GetNextMessage(psRequest.username, psRequest.topic,
-                                              msgOut);
+            statusCode = this->GetNextMessage(psRequest.username,
+                                              psRequest.topic, msgOut);
             break;
          case PublishSubscribeServerOp::CONTINUE:
+            /*
+             * If it is a partial request, we need to leave the request
+             * unchanged and return the status back to the caller.
+             */
             return false;
          case PublishSubscribeServerOp::ERROR:
             statusCode = BAD_REQUEST;
@@ -100,6 +111,7 @@ PublishSubscribeServer::HandleRequestInt(ReadRequest *request)
    return true;
 }
 
+
 int
 PublishSubscribeServer::Subscribe(const string &username,
                                   const string &topic)
@@ -112,6 +124,7 @@ PublishSubscribeServer::Subscribe(const string &username,
    this->topicSubscription[topic].insert(username);
    return OK;
 }
+
 
 int
 PublishSubscribeServer::Unsubscribe(const string &username,
@@ -126,6 +139,9 @@ PublishSubscribeServer::Unsubscribe(const string &username,
    auto it = this->topicSubscription.find(topic);
    if (it != this->topicSubscription.end()) {
       it->second.erase(username);
+      /* If no user subscribe to the topic after unsubscribe, we erase the list
+       * from the map.
+       */
       if (it->second.size() == 0) {
          this->topicSubscription.erase(it);
       }
@@ -135,6 +151,7 @@ PublishSubscribeServer::Unsubscribe(const string &username,
 
    return ret;
 }
+
 
 int
 PublishSubscribeServer::Publish(const string &topic,
@@ -174,9 +191,8 @@ PublishSubscribeServer::GetNextMessage(const string &username,
    printf("[GetNext] Topic: %s Username: %s\n", topic.c_str(),
           username.c_str());
    /*
-    * Find out if the username subscribed to the topic.
-    * Either the topic has no subscriber or the user is not on the subscriber
-    * list.
+    * Find out if the username subscribed to the topic.  Either the topic has
+    * no subscriber or the user is not on the subscriber list.
     */
    auto topicSubscriptionIt = this->topicSubscription.find(topic);
    if (topicSubscriptionIt == this->topicSubscription.end()) {
@@ -196,6 +212,7 @@ PublishSubscribeServer::GetNextMessage(const string &username,
       it->second.pop();
       msgOut = msg->msg;
       if (msg->Dereference()) {
+         /* Safe to delete the msg if the ref count reaches 0. */
          delete msg;
       }
 

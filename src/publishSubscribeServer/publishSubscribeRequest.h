@@ -1,3 +1,16 @@
+/*
+ * @file publishSubscribeServer/publishSubscribeRequest.h
+ * @brief Contain the definitions related to Publish Subscribe requests.
+ *
+ * The functions contained in this file are pertinate to parsing out the
+ * request based on the Publish Subscribe APIs. The validity of the http
+ * request is checked by functions defined in the external directory. For
+ * these commands, we parse the uri out for username and topic, and if present
+ * parse out the content based on the Content-Length field in the header.
+ *
+ * @author Yihua Eric Fang (yihuaf)
+ */
+
 #pragma once
 
 #include <string>
@@ -20,7 +33,7 @@ enum class PublishSubscribeServerOp {
    PUBLISH,
    GET_NEXT_MSG,
    /*
-    * Ill-formed http request. We simply drop them.
+    * Ill-formed http request. We simply return 400 Bad Request.
     */
    ERROR,
    /*
