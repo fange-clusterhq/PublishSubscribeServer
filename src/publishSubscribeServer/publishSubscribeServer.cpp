@@ -74,22 +74,24 @@ PublishSubscribeServer::HandleRequestInt(ReadRequest *request)
          case PublishSubscribeServerOp::CONTINUE:
             return false;
          case PublishSubscribeServerOp::ERROR:
-            /* In error case, we simply drop the meesage and fake success. */
-            request->Consume(bytesConsumed);
-            return true;
+            printf("Received an illformed request.\n");
+            break;
          default:
             assert(false);
       }
 
-      /* Queue up the response. */
-      WriteRequest *response = new WriteRequest();
-      response->clientFd = request->clientFd;
-      string httpResponse = PublishSubscribeResponse::FormResponse(statusCode,
-                                                                   msgOut);
-      /* Needs to copy the '\0' at the end, so size + 1. */
-      memcpy(response->buffer, httpResponse.c_str(), httpResponse.size() + 1);
-      response->numBytes = httpResponse.size() + 1;
-      this->queueMsg(response->clientFd, response);
+      if (psRequest.opCode != PublishSubscribeServerOp::ERROR) {
+         /* Queue up the response. */
+         WriteRequest *response = new WriteRequest();
+         response->clientFd = request->clientFd;
+         string httpResponse = PublishSubscribeResponse::FormResponse(statusCode,
+                                                                      msgOut);
+         /* Needs to copy the '\0' at the end, so size + 1. */
+         memcpy(response->buffer, httpResponse.c_str(), httpResponse.size() + 1);
+         response->numBytes = httpResponse.size() + 1;
+         this->queueMsg(response->clientFd, response);
+      }
+
       request->Consume(bytesConsumed);
       if (request->numBytes == 0) {
          break;

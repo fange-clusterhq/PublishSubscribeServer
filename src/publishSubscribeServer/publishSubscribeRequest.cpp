@@ -36,7 +36,7 @@ PublishSubscribeRequest::Translate(string &httpRequest)
       return 0;
    }
 
-   HTTPRequestToString(parsedRequest);
+   // HTTPRequestToString(parsedRequest);
    /* The iterator to the end of the header. */
    auto headerEnd = get<1>(ret);
    bytesConsumed += distance(httpRequest.begin(), headerEnd);
@@ -72,7 +72,7 @@ PublishSubscribeRequest::Translate(string &httpRequest)
       /*
        * The request is a valid http request, but not a request we recognize.
        * We choose to drop this http request. Note, we do not drop any other
-       * request if the is more than one request in the bytes received. Thus,
+       * request if there is more than one request in the bytes received. Thus,
        * we return the bytes consumed.
        */
       this->opCode = PublishSubscribeServerOp::ERROR;
@@ -128,6 +128,11 @@ PublishSubscribeRequest::CheckAndParsePublish(string &uri)
 
    /* In the form of /topic */
    this->topic = tokenizedUri[1];
+   if (this->topic.empty()) {
+      this->opCode = PublishSubscribeServerOp::ERROR;
+      return false;
+   }
+
    this->opCode = PublishSubscribeServerOp::PUBLISH;
    return true;
 }
@@ -156,6 +161,10 @@ PublishSubscribeRequest::ParseTopicUsername(string &uri)
 
    this->topic = tokenizedUri[1];
    this->username = tokenizedUri[2];
+   if (this->topic.empty() || this->username.empty()) {
+      return false;
+   }
+
    return true;
 }
 
@@ -195,6 +204,5 @@ PublishSubscribeResponse::FormResponse(int statusCode,
       oss << body;
    }
 
-   //printf("Formed Response: %s\n", oss.str().c_str());
    return oss.str();
 }
