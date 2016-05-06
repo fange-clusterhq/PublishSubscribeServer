@@ -27,10 +27,13 @@ def Publish(conn, topic, content):
    :params topic The topic.
    :params content The published content.
    """
+   print "Publish"
+   conn.connect()
    uri = "/%s" % (topic)
    conn.request("POST", uri, body = content)
    r = conn.getresponse()
    print r.status, r.reason
+   conn.close()
    return r.status
 
 def Subscribe(conn, topic, username):
@@ -39,10 +42,13 @@ def Subscribe(conn, topic, username):
    :params topic The topic.
    :params username The username.
    """
+   print "Subscribe"
+   conn.connect()
    uri = "/%s/%s" % (topic, username)
    conn.request("POST", uri)
    r = conn.getresponse()
    print r.status, r.reason
+   conn.close()
    return r.status
 
 def Unsubscribe(conn, topic, username):
@@ -51,10 +57,13 @@ def Unsubscribe(conn, topic, username):
    :params topic The topic.
    :params username The username.
    """
+   print "Unsubsribe"
+   conn.connect()
    uri = "/%s/%s" % (topic, username)
    conn.request("DELETE", uri)
    r = conn.getresponse()
    print r.status, r.reason
+   conn.close()
    return r.status
 
 def GetNext(conn, topic, username):
@@ -63,11 +72,15 @@ def GetNext(conn, topic, username):
    :params topic The topic.
    :params username The username.
    """
+   print "GetNext"
+   conn.connect()
    uri = "/%s/%s" % (topic, username)
    conn.request("GET", uri)
    r = conn.getresponse()
    print r.status, r.reason
-   print r.getheaders()
+   if r.status == 200:
+      print r.read()
+   conn.close()
    return r.status
 
 func_map = {"Subscribe" : Subscribe,

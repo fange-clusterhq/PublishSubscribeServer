@@ -21,9 +21,11 @@ class Test(object):
        return
 
    def FlushingTest(self):
+       # Flood the server with a lot of request and make sure
+       # the server does not crash.
        client = lib.RawClient(self.port)
        client.connect()
-       for i in range(0, 100):
+       for i in range(0, 50):
           client.send(lib.GenerateHttpRequest("DELETE", "/CMU/yihuaf"))
 
        client.close()
@@ -31,8 +33,7 @@ class Test(object):
 
    def EdgeCaseTest(self):
        # Test for some edge cases.
-       # Since the server will drop the request that is ill formed,
-       # we will not be expecting a response.
+       # Make sure these requests does not crash the server.
        client = lib.RawClient(self.port)
        client.connect()
        client.send(lib.GenerateHttpRequest("GET", "///"))
@@ -54,7 +55,19 @@ class Test(object):
        client = lib.GetClient(self.port)
        lib.Expect(lib.Unsubscribe(client, "VMWARE", "abcd"), 404);
        lib.Expect(lib.GetNext(client, "VMWARE", "abcd"), 404)
-       client.close()
+       # Try ill-formed request
+       lib.Expect(lib.Subscribe(client, "CMU", ""), 400)
+       lib.Expect(lib.Subscribe(client, "", "alice"), 400)
+       lib.Expect(lib.Subscribe(client, "", ""), 400)
+       lib.Expect(lib.Unsubscribe(client, "VMWARE", ""), 400);
+       lib.Expect(lib.Unsubscribe(client, "", "abcd"), 400)
+       lib.Expect(lib.Unsubscribe(client, "", ""), 400);
+       lib.Expect(lib.GetNext(client, "CMU", ""), 400)
+       lib.Expect(lib.GetNext(client, "", "alice"), 400)
+       lib.Expect(lib.GetNext(client, "", ""), 400)
+       lib.Expect(lib.Publish(client, "CMU", ""), 400)
+       lib.Expect(lib.Publish(client, "", "alice"), 400)
+       lib.Expect(lib.Publish(client, "", ""), 400)
        return
 
    def PositiveTest(self):
@@ -67,25 +80,24 @@ class Test(object):
        lib.Expect(lib.GetNext(client, "CMU", "alice"), 204)
        lib.Expect(lib.GetNext(client, "CMU", "bob"), 200)
        lib.Expect(lib.Unsubscribe(client, "CMU", "yihuaf"), 200)
-       client.close()
        return
 
    def BasicServerTest(self):
        # Try all operation once.
        client = lib.GetClient(self.port)
-       lib.Expect(lib.Subscribe(client, "CMU", "yihuaf"), 200)
-       lib.Expect(lib.Publish(client, "CMU", "HELLO WORLD"), 200)
-       lib.Expect(lib.GetNext(client, "CMU", "yihuaf"), 200)
-       lib.Expect(lib.Unsubscribe(client, "CMU", "yihuaf"), 200)
-       client.close()
+       for i in range (0, 10):
+          lib.Expect(lib.Subscribe(client, "CMU", "yihuaf"), 200)
+          lib.Expect(lib.Publish(client, "CMU", "HELLO WORLD"), 200)
+          lib.Expect(lib.GetNext(client, "CMU", "yihuaf"), 200)
+          lib.Expect(lib.Unsubscribe(client, "CMU", "yihuaf"), 200)
        return
 
    def Test(self):
-       #self.BasicServerTest()
-       #self.PositiveTest()
-       #self.NegativeTest()
-       #self.FlushingTest()
-       #self.EdgeCaseTest()
+       self.BasicServerTest()
+       self.PositiveTest()
+       self.NegativeTest()
+       self.FlushingTest()
+       self.EdgeCaseTest()
        self.PartialTest()
        return
 
