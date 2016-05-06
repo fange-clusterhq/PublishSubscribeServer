@@ -81,9 +81,15 @@ PublishSubscribeServer::HandleRequestInt(ReadRequest *request)
          case PublishSubscribeServerOp::CONTINUE:
             /*
              * If it is a partial request, we need to leave the request
-             * unchanged and return the status back to the caller.
+             * unchanged and return the status back to the caller. The
+             * only exception will be if the buffer has already reached
+             * the max. Then we treat the this case as an error.
              */
-            return false;
+            if (request->numBytes < MAX_MSG_BUFFER_SIZE) {
+               return false;
+            } else{
+               statisCode = BAD_REQUEST;
+            }
          case PublishSubscribeServerOp::ERROR:
             statusCode = BAD_REQUEST;
             break;
