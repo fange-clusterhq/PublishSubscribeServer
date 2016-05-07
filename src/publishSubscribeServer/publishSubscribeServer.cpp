@@ -45,6 +45,20 @@ PublishSubscribeServer::PublishSubscribeServer(int port)
 
 PublishSubscribeServer::~PublishSubscribeServer()
 {
+   for (auto it = this->msgQueue.begin(); it != msgQueue.end(); it++) {
+      auto &queue = it->second;
+      if (queue.empty()) {
+         continue;
+      }
+
+      while (!queue.empty()) {
+         if (queue.front() != NULL && queue.front()->Dereference()) {
+            delete queue.front();
+         }
+
+         queue.pop();
+      }
+   }
 }
 
 

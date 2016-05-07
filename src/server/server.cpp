@@ -67,7 +67,30 @@ Server::Server(int port)
 {}
 
 
-Server::~Server() {}
+Server::~Server()
+{
+   for (auto it = this->clientContext.begin(); it != this->clientContext.end();
+        it++) {
+      int clientFd = it->first;
+      ReadRequest *request = it->second;
+      close(clientFd);
+      if (request != NULL) {
+         delete request;
+      }
+   }
+
+   for (auto it = this->msgOutgoingQueue.begin();
+        it != this->msgOutgoingQueue.end(); it++) {
+      queue<WriteRequest *> &msgQueue = it->second;
+      while (!msgQueue.empty()) {
+         if (msgQueue.front() != NULL) {
+            delete msgQueue.front();
+         }
+
+         msgQueue.pop();
+      }
+   }
+}
 
 
 void

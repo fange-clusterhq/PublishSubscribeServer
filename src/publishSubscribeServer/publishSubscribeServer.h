@@ -60,6 +60,10 @@ class PublishedMsg {
 class PublishSubscribeServer : public Server {
    public:
       explicit PublishSubscribeServer(int port);
+      /*
+       * @brief Free all the messages saved.
+       * @return None.
+       */
       ~PublishSubscribeServer();
    private:
       /* Topic -> Usernames mapping. */
