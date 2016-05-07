@@ -1,6 +1,6 @@
 This is a simple Publish Subscribe Server.
 
-Directory Layout:
+####Directory Layout:
 src/:
         Contain the source code of the publish subscribe server.
 
@@ -20,13 +20,13 @@ test/:
 docs/:
         Contain the documentations and required write up.
 
-Instruction of Use:
+####Instruction of Use:
 1. git clone the repo.
 2. In the project root directory, run 'make'
 3. The binary will be created under bin/.
 4. To run: ./bin/publishSubscribeServer -p <port>
 
-Tests:
+#####Tests:
 To run tests, simply do: python test.py <port>
 To run CLI, simply do: python cli.py <port>
 Typing help in cli should print out the usage.
