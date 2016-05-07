@@ -1,0 +1,20 @@
+Directory Layout:
+src/:
+        Contain the source code of the publish subscribe server.
+
+src/external:
+        Contain the external open source code needed for the project The main
+component included is an http parser written in c++ with only STL.
+
+src/server:
+        Contain the implementation of a base server class.
+
+src/publishSubscribeServer:
+        Contain the implementation of the publish subscribe server based on
+the requirements in the exercise.
+
+test/:
+        Contain the tests and a command line interface to the server.
+docs/:
+        Contain the documentations and required write up.
+
