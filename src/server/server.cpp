@@ -7,6 +7,7 @@
 #include "server.h"
 #include <cassert>
 #include <cstring>
+#include <csignal>
 
 using namespace std;
 

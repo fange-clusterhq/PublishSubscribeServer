@@ -7,6 +7,7 @@
 #include "publishSubscribeServer.h"
 #include "publishSubscribeRequest.h"
 #include <cassert>
+#include <cstring>
 
 using namespace std;
 
@@ -88,7 +89,7 @@ PublishSubscribeServer::HandleRequestInt(ReadRequest *request)
             if (request->numBytes < MAX_MSG_BUFFER_SIZE) {
                return false;
             } else{
-               statisCode = BAD_REQUEST;
+               statusCode = BAD_REQUEST;
             }
          case PublishSubscribeServerOp::ERROR:
             statusCode = BAD_REQUEST;
