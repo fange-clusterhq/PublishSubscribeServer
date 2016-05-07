@@ -85,11 +85,10 @@ class Test(object):
    def BasicServerTest(self):
        # Try all operation once.
        client = lib.GetClient(self.port)
-       for i in range (0, 10):
-          lib.Expect(lib.Subscribe(client, "CMU", "yihuaf"), 200)
-          lib.Expect(lib.Publish(client, "CMU", "HELLO WORLD"), 200)
-          lib.Expect(lib.GetNext(client, "CMU", "yihuaf"), 200)
-          lib.Expect(lib.Unsubscribe(client, "CMU", "yihuaf"), 200)
+       lib.Expect(lib.Subscribe(client, "CMU", "yihuaf"), 200)
+       lib.Expect(lib.Publish(client, "CMU", "HELLO WORLD"), 200)
+       lib.Expect(lib.GetNext(client, "CMU", "yihuaf"), 200)
+       lib.Expect(lib.Unsubscribe(client, "CMU", "yihuaf"), 200)
        return
 
    def Test(self):
