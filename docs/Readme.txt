@@ -231,3 +231,9 @@ For now, I used the simple assert from <cassert>. Ideally, we should have a
 debug build option where only in the debug build will all asserts executed.
 Otherwise, these asserts will slow down the system during production.
 
+8. Proper Termination.
+Again, since the server does not need to persist across restart and the states
+are purely in memory, I just rely on sending control-c to kill the server when
+the server is done. I should have implemented a signal handler to properly
+terminate the server.
+
